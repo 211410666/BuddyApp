@@ -1,0 +1,16 @@
+{
+    "build": {
+      "production": {
+        "android": {
+          "buildType": "apk"
+        },
+        "ios": {
+          "workflow": "managed"
+        },
+        "web": {
+          "development": true
+        }
+      }
+    }
+  }
+  
