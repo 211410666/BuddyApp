@@ -138,6 +138,14 @@ const FriendPosts = ({ user }: Props) => {
         setFriendDiaryData(mergedData)
     }
 
+    const formatDuration = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+    return `${hours}時 ${minutes}分 ${seconds}秒`
+}
+
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>好友的日記</Text>
@@ -152,7 +160,7 @@ const FriendPosts = ({ user }: Props) => {
                             <Text style={styles.details}>
                                 {item.category === '飲食'
                                     ? `食物名稱: ${item.food_name}`
-                                    : `運動持續時間: ${item.duration} 分鐘，心跳率: ${item.heartrate}`}
+                                    : `運動持續時間: ${formatDuration(item.duration)}，心跳率: ${item.heartrate}`}
                             </Text>
                             <Text style={styles.createTime}>
                                 發布時間: {new Date(item.create_time).toLocaleString('zh-TW', {
