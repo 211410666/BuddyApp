@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
 import CustomModal from './CustomModal';
+import Common_styles from '../lib/common_styles';
 
 export default function Diary({ user }: any) {
   const [modalVisible, setModalVisible] = useState(false);
@@ -58,26 +59,6 @@ export default function Diary({ user }: any) {
 
     fetchUserName();
   }, [user.id]);
-
-  const handleUpdateName = async () => {
-    if (!nameInput.trim()) {
-      showMessage('姓名不得為空');
-      return;
-    }
-
-    const { error } = await supabase
-      .from('users')
-      .update({ name: nameInput.trim() })
-      .eq('id', user.id);
-
-    if (error) {
-      showMessage('更新失敗，請稍後再試');
-    } else {
-      setUserName(nameInput.trim());
-      setModalVisible(false);
-      showMessage('姓名更新成功！');
-    }
-  };
 
   const showMessage = (msg: string) => {
     setMessage(msg);

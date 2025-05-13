@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import { supabase } from '../lib/supabase'
-
+import LoadingModal from './LoadingModal'
 interface Props {
     user: any
 }
 
 const FriendPosts = ({ user }: Props) => {
+    const [loading, setLoading] = useState(false)
     const [friendDiaryData, setFriendDiaryData] = useState<any[]>([])
 
     useEffect(() => {
@@ -16,6 +17,7 @@ const FriendPosts = ({ user }: Props) => {
     }, [user])
 
     const fetchFriendDiarys = async () => {
+        setLoading(true)
         // ✅ 找出好友關係
         const { data: relations, error: relationError } = await supabase
             .from('relations')
@@ -135,6 +137,7 @@ const FriendPosts = ({ user }: Props) => {
         mergedData.sort((a, b) => new Date(b.create_time).getTime() - new Date(a.create_time).getTime())
 
         // ✅ 更新顯示結果
+        setLoading(false)
         setFriendDiaryData(mergedData)
     }
 
@@ -174,6 +177,7 @@ const FriendPosts = ({ user }: Props) => {
                     <Text style={styles.noData}>目前無好友的日記資料</Text>
                 )}
             </ScrollView>
+            <LoadingModal visible={loading} />
         </View>
     )
 }

@@ -9,6 +9,7 @@ import {
   StyleSheet,
 } from 'react-native'
 import { supabase } from '../lib/supabase'
+import Common_styles from '../lib/common_styles';
 
 export default function FriendList({ user, showMessage }: { user: any; showMessage: (msg: string) => void }) {
   const [friends, setFriends] = useState<any[]>([])

@@ -14,17 +14,21 @@ import {
 } from 'react-native'
 import { supabase } from '../lib/supabase'
 import CustomModal from './CustomModal'
+import SuccessModal from './SuccesModal';
+import ErrorModal from './ErrorModal';
+
 
 export default function FoodForm({ user }: any) {
   const [searchText, setSearchText] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [selectedFood, setSelectedFood] = useState<any | null>(null)
-  const [modalVisible, setModalVisible] = useState(false)
   const [newFoodName, setNewFoodName] = useState('')
   const [carbs, setCarbs] = useState('0')
   const [protein, setProtein] = useState('0')
   const [fat, setFat] = useState('0')
   const [message, setModalMessage] = useState('');
+  const [successVisible, setSuccessVisible] = useState(false)
+  const [errorVisible, setErrorVisible] = useState(false)
 
   useEffect(() => {
     const fetchFoods = async () => {
@@ -50,7 +54,8 @@ export default function FoodForm({ user }: any) {
     const f = parseFloat(fat)
 
     if (!newFoodName || isNaN(carb) || isNaN(prot) || isNaN(f)) {
-      showMessage('請填寫正確的食物與營養成分')
+      setModalMessage('請填寫正確的食物與營養成分')
+      setErrorVisible(true)
       return
     }
 
@@ -66,9 +71,11 @@ export default function FoodForm({ user }: any) {
     }).throwOnError()
 
     if (error) {
-      showMessage('新增失敗')
+      setModalMessage('連線資料庫失敗,請與管理員聯繫')
+      setErrorVisible(true)
     } else {
-      showMessage('新增成功！')
+      setModalMessage('新增食物成功!!')
+      setSuccessVisible(true)
       setNewFoodName('')
       setCarbs('0')
       setProtein('0')
@@ -78,7 +85,8 @@ export default function FoodForm({ user }: any) {
 
   const handleSubmit = async () => {
     if (!selectedFood) {
-      showMessage('請先從上方搜尋並選擇一個食物')
+      setModalMessage('請先從上方搜尋並選擇一個食物')
+      setErrorVisible(true)
       return
     }
 
@@ -108,7 +116,8 @@ export default function FoodForm({ user }: any) {
         .single()
 
       if (insertDiaryError || !newDiarys) {
-        showMessage('無法建立日記紀錄')
+        setModalMessage('連線資料庫失敗,請與管理員聯繫')
+        setErrorVisible(true)
         return
       }
       diarys_id = newDiarys.diary_id
@@ -123,20 +132,16 @@ export default function FoodForm({ user }: any) {
       })
 
     if (insertFoodError) {
-      showMessage('寫入日記食物失敗')
+      setModalMessage('連線資料庫失敗,請與管理員聯繫')
+      setErrorVisible(true)
     } else {
-      showMessage('紀錄成功！')
+      setModalMessage('新增飲食紀錄成功!!')
+      setSuccessVisible(true)
       setSelectedFood(null)
       setSearchText('')
       setSearchResults([])
     }
   }
-
-  const showMessage = (msg: string) => {
-    setModalMessage(msg)
-    setModalVisible(true)
-  }
-
 
   return (
     <KeyboardAvoidingView
@@ -223,7 +228,17 @@ export default function FoodForm({ user }: any) {
           <Text style={styles.submitText}>新增</Text>
         </TouchableOpacity>
       </ScrollView>
-      <CustomModal visible={modalVisible} message={message} onClose={() => setModalVisible(false)} />
+      <SuccessModal
+        visible={successVisible}
+        message={message}
+        onClose={() => setSuccessVisible(false)}
+      />
+
+      <ErrorModal
+        visible={errorVisible}
+        message={message}
+        onClose={() => setErrorVisible(false)}
+      />
     </KeyboardAvoidingView>
 
   )
@@ -272,6 +287,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 4,
   },
-  
+
 
 })
