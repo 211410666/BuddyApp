@@ -17,7 +17,7 @@ export default function HomeScreen({ route }: any) {
       case '分析':
         return <Analysis />
       case '好友':
-        return <Friends />
+        return <Friends user={user}/>
       case '新增數據':
         return <AddData user={user}/>
       case '日記':

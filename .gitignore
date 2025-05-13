@@ -9,8 +9,8 @@ package-lock.json
 .expo-shared/
 
 # Expo 打包輸出
-dist/
-web-build/
+#dist/
+#web-build/
 
 # 作業系統產生的檔案
 .DS_Store
