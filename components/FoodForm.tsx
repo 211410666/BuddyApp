@@ -13,9 +13,9 @@ import {
   Modal,
 } from 'react-native'
 import { supabase } from '../lib/supabase'
-import CustomModal from './CustomModal'
 import SuccessModal from './SuccesModal';
 import ErrorModal from './ErrorModal';
+import Common_styles from '../lib/common_styles'
 
 
 export default function FoodForm({ user }: any) {
@@ -32,7 +32,7 @@ export default function FoodForm({ user }: any) {
 
   useEffect(() => {
     const fetchFoods = async () => {
-      if (searchText.length < 2) {
+      if (searchText.length < 1) {
         setSearchResults([])
         return
       }
@@ -148,10 +148,10 @@ export default function FoodForm({ user }: any) {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView contentContainerStyle={Common_styles.common_scrollContainer}>
         {/* 搜尋區 */}
         <TextInput
-          style={styles.input}
+          style={Common_styles.input}
           placeholder="輸入食物名稱..."
           value={searchText}
           onChangeText={setSearchText}
@@ -162,22 +162,22 @@ export default function FoodForm({ user }: any) {
           renderItem={({ item, index }) => (
             <Animatable.View animation="fadeInUp" duration={500} delay={index * 50}>
               <TouchableOpacity onPress={() => setSelectedFood(item)}>
-                <Text style={styles.resultItem}>{item.food_name}</Text>
+                <Text style={Common_styles.resultItem}>{item.food_name}</Text>
               </TouchableOpacity>
             </Animatable.View>
           )}
         />
 
         {selectedFood && (
-          <View style={styles.nutritionBox}>
+          <View style={Common_styles.nutritionBox}>
             <Text>碳水: {selectedFood.carbohydrates}g</Text>
             <Text>蛋白質: {selectedFood.protein}g</Text>
             <Text>脂肪: {selectedFood.fat}g</Text>
             <Text>熱量: {selectedFood.calorie} kcal</Text>
           </View>
         )}
-        <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-          <Text style={styles.submitText}>送出</Text>
+        <TouchableOpacity style={Common_styles.submitBtn} onPress={handleSubmit}>
+          <Text style={Common_styles.submitText}>送出</Text>
         </TouchableOpacity>
 
 
@@ -185,48 +185,50 @@ export default function FoodForm({ user }: any) {
         <Text style={{ marginTop: 20, fontWeight: 'bold' }}>
           找不到你要的食物嗎？從這裡新增！
         </Text>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>食物名稱</Text>
+        <View style={Common_styles.inputGroup}>
+          <Text style={Common_styles.label}>食物名稱</Text>
           <TextInput
-            style={styles.input}
+            style={Common_styles.input}
             placeholder="輸入食物名稱"
             value={newFoodName}
             onChangeText={setNewFoodName}
           />
         </View>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>碳水化合物 (g)</Text>
+        <View style={Common_styles.inputGroup}>
+          <Text style={Common_styles.label}>碳水化合物 (g)</Text>
           <TextInput
-            style={styles.input}
+            style={Common_styles.input}
             placeholder="碳水化合物 (g)"
             keyboardType="numeric"
             value={carbs}
             onChangeText={setCarbs}
           />
         </View>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>蛋白質 (g)</Text>
+        <View style={Common_styles.inputGroup}>
+          <Text style={Common_styles.label}>蛋白質 (g)</Text>
           <TextInput
-            style={styles.input}
+            style={Common_styles.input}
             placeholder="蛋白質 (g)"
             keyboardType="numeric"
             value={protein}
             onChangeText={setProtein}
           />
         </View>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>脂肪 (g)</Text>
+        <View style={Common_styles.inputGroup}>
+          <Text style={Common_styles.label}>脂肪 (g)</Text>
           <TextInput
-            style={styles.input}
+            style={Common_styles.input}
             placeholder="脂肪 (g)"
             keyboardType="numeric"
             value={fat}
             onChangeText={setFat}
           />
         </View>
-        <TouchableOpacity style={styles.submitBtn} onPress={handleAddNewFood}>
-          <Text style={styles.submitText}>新增</Text>
+        <View style={{flex:1}}><TouchableOpacity style={Common_styles.submitBtn} onPress={handleAddNewFood}>
+          <Text style={Common_styles.submitText}>新增</Text>
         </TouchableOpacity>
+        </View>
+        
       </ScrollView>
       <SuccessModal
         visible={successVisible}
@@ -243,50 +245,3 @@ export default function FoodForm({ user }: any) {
 
   )
 }
-
-const styles = StyleSheet.create({
-  scrollContainer: {
-    paddingHorizontal: 32,
-    paddingBottom: 100, // 保留底部空間
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginVertical: 6,
-  },
-  resultItem: {
-    padding: 10,
-    backgroundColor: '#e0f7e0',
-    marginBottom: 4,
-    borderRadius: 6,
-  },
-  nutritionBox: {
-    backgroundColor: '#f2f2f2',
-    padding: 10,
-    marginVertical: 10,
-    borderRadius: 6,
-  },
-  submitBtn: {
-    backgroundColor: '#4caf50',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  submitText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  inputGroup: {
-    marginBottom: 12,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-
-
-})
