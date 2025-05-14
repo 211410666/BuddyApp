@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
-import CustomModal from './CustomModal';
 import Common_styles from '../lib/common_styles';
+import ErrorModal from './ErrorModal';
+import LoadingModal from './LoadingModal';
+import SuccessModal from './SuccesModal';
 
 export default function Diary({ user }: any) {
   const [modalVisible, setModalVisible] = useState(false);
@@ -12,9 +14,13 @@ export default function Diary({ user }: any) {
   const [userName, setUserName] = useState('');
   const [diarys, setDiarys] = useState<any[]>([]);
   const [selectedItem, setSelectedItem] = useState<any>(null); // 用來儲存選中的 diary
+  const [loadingVisble, setLoadingVisble] = useState(false)
+  const [errorVisible, setErrorVisible] = useState(false)
+  const [successVisible, setSuccessVisible] = useState(false)
 
   useEffect(() => {
     const fetchDiarys = async () => {
+      setLoadingVisble(true)
       const { data, error } = await supabase
         .from('diarys')
         .select('*')
@@ -37,6 +43,7 @@ export default function Diary({ user }: any) {
 
         setDiarys(sorted);
       }
+      setLoadingVisble(false);
     };
 
     fetchDiarys();
@@ -44,6 +51,7 @@ export default function Diary({ user }: any) {
 
   useEffect(() => {
     const fetchUserName = async () => {
+      setLoadingVisble(true);
       const { data, error } = await supabase
         .from('users')
         .select('name')
@@ -55,15 +63,11 @@ export default function Diary({ user }: any) {
       } else {
         setUserName(data.name || '');
       }
+      setLoadingVisble(false)
     };
 
     fetchUserName();
   }, [user.id]);
-
-  const showMessage = (msg: string) => {
-    setMessage(msg);
-    setCustomModalVisible(true);
-  };
 
   const handleItemPress = (item: any) => {
     setSelectedItem(item);
@@ -136,10 +140,20 @@ export default function Diary({ user }: any) {
       </Modal>
 
       {/* Error / success message */}
-      <CustomModal
-        visible={customModalVisible}
+      <LoadingModal
+        visible={loadingVisble}
+      />
+
+      <ErrorModal
+        visible={errorVisible}
         message={message}
-        onClose={() => setCustomModalVisible(false)}
+        onClose={() => setErrorVisible(false)}
+      />
+
+      <SuccessModal
+        visible={successVisible}
+        message={message}
+        onClose={() => setSuccessVisible(false)}
       />
     </View>
   );

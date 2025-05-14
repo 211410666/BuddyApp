@@ -49,7 +49,6 @@ const FriendPosts = ({ user }: Props) => {
             console.error('❌ diarys 查詢失敗:', diaryError)
             return
         }
-        console.log('📄 好友的日記 ID：', diarys)
 
         const foodDiaryIds = diarys
             .filter(d => d.category === 'food')
@@ -90,10 +89,6 @@ const FriendPosts = ({ user }: Props) => {
             console.error('❌ diary_food 或 diary_exercise 查詢失敗:', dfError || deError)
             return
         }
-
-        console.log('🍱 食物類日記：', diaryFoodData)
-        console.log('🏃‍♂️ 運動類日記：', diaryExerciseData)
-
         // 查詢對應的食物名稱
         const foodIds = diaryFoodData.map((item: any) => item.food_id)
         const { data: foodData, error: foodError } = await supabase
@@ -105,8 +100,6 @@ const FriendPosts = ({ user }: Props) => {
             console.error('❌ 食物資料查詢失敗:', foodError)
             return
         }
-        console.log('🍽 食物資料：', foodData)
-
         // 用食物名稱替換 food_id
         const foodMap = foodData.reduce((acc: any, food: any) => {
             acc[food.food_id] = food.food_name
@@ -162,8 +155,6 @@ const FriendPosts = ({ user }: Props) => {
         // ✅ 更新顯示結果
         setLoading(false)
         setFriendDiaryData(mergedData)
-
-        console.log('mergedata', mergedData);
     }
 
     const formatDuration = (totalSeconds: number) => {
@@ -213,7 +204,6 @@ const FriendPosts = ({ user }: Props) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>好友的日記</Text>
             <ScrollView style={styles.scrollContainer}>
                 {friendDiaryData.length > 0 ? (
                     friendDiaryData.map((item, index) => (
