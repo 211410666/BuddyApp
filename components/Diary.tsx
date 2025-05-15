@@ -5,6 +5,7 @@ import DailyCalorieSection from "./diaries/DailyCalorieSection";
 import DiaryHeader from "./diaries/DiaryHeader";
 import { supabase } from "../lib/supabase";
 import { UsersTable } from "../lib/types";
+import { match } from "ts-pattern";
 
 interface DiaryProps {
   user: Pick<UsersTable, "id">;
@@ -27,6 +28,180 @@ interface DailyGroupData {
   items: EntryItem[];
 }
 
+async function getUserName(userId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("name")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    console.error("取得使用者名稱失敗:", error);
+    return "";
+  }
+  if (!data) {
+    console.error("[User Name] Can not fetch user name");
+    return "";
+  }
+  // console.log("[User Name]: ", data.name);
+  return data.name ?? "";
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toISOString().split("T")[0];
+}
+
+function extractTime(timestamp: string): string {
+  return new Date(timestamp).toLocaleTimeString("zh-TW", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+async function fetchDiaryEntries(userId: string) {
+  console.log("[Diary Entries] 傳入的 userId 是：", userId);
+  const { data, error } = await supabase
+    .from("diarys")
+    .select("*")
+    .eq("owner", userId)
+    .order("create_time", { ascending: false });
+  if (error) {
+    console.error(`[Fetch Diaries] error: ${error}`);
+    return [];
+  }
+  if (!data || data.length === 0) {
+    console.error("[Fetch Diaries] Data is empty");
+    return [];
+  }
+  console.log("📘 diaryList:", data);
+  return data;
+}
+
+async function fetchFoodRecords(diaryIds: string[]) {
+  const { data, error } = await supabase
+    .from("diary_food")
+    .select("diarys_id, food_id, create_time")
+    .in("diarys_id", diaryIds);
+  if (error) {
+    console.error("[Food Records] Error: ", error);
+    return [];
+  }
+  if (!data || data.length === 0) {
+    console.error("[Food Records] Data is empty");
+    return [];
+  }
+  console.log("🥬 foodRecords:", data);
+  return data;
+}
+
+async function fetchExerciseRecords(diaryIds: string[]) {
+  const { data, error } = await supabase
+    .from("diary_exercise")
+    .select("diarys_id, avg_heartrate, duration, create_time")
+    .in("diarys_id", diaryIds);
+  if (error) {
+    console.error("[Exercise Records] Error: ", error);
+    return [];
+  }
+  if (!data || data.length === 0) {
+    console.error("[Exercise Records] Data is empty");
+    return [];
+  }
+  console.log("🏃‍♂️ exerciseRecords:", data);
+  return data;
+}
+
+async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
+  console.log("[Diary Data] 傳入的 userId 是：", userId);
+  const isValidUser = await supabase.from("users").select("*").eq("id", userId);
+  if (!isValidUser) {
+    console.error("[Diary Data] Not Valid User");
+    return [];
+  }
+  console.log(isValidUser);
+  const diaryList = await fetchDiaryEntries(userId);
+  const diaryIds = diaryList.map((d) => d.diary_id);
+
+  const foodRecords = await fetchFoodRecords(diaryIds);
+  const exerciseRecords = await fetchExerciseRecords(diaryIds);
+
+  const groupedByDate: Record<
+    string,
+    { diary_id: string; category: string }[]
+  > = {};
+  for (const diary of diaryList) {
+    const date = formatDate(diary.create_time);
+    if (!groupedByDate[date]) groupedByDate[date] = [];
+    groupedByDate[date].push({
+      diary_id: diary.diary_id,
+      category: diary.category,
+    });
+  }
+
+  const finalData: DailyGroupData[] = Object.entries(groupedByDate).map(
+    ([date, entries]) => {
+      const items: EntryItem[] = [];
+
+      for (const diary of entries) {
+        const result = match(diary.category)
+          .with("food", () => {
+            console.log("📌 處理 food category:", diary);
+            const match = foodRecords.find(
+              (f) => f.diarys_id === diary.diary_id,
+            );
+            if (!match) {
+              console.log("❌ 沒有找到對應的 food record");
+              return null;
+            }
+            console.log("✅ 找到對應 food record:", match);
+            return {
+              id: match.diarys_id,
+              title: `食物 #${match.food_id}`,
+              time: extractTime(match.create_time),
+              type: "food" as const,
+              calories: 0,
+            };
+          })
+          .with("exercise", () => {
+            console.log("📌 處理 exercise category:", diary);
+            const match = exerciseRecords.find(
+              (e) => e.diarys_id === diary.diary_id,
+            );
+            if (!match) {
+              console.log("❌ 沒有找到對應的 exercise record");
+              return null;
+            }
+            console.log("✅ 找到對應 exercise record:", match);
+            const intensity = match.avg_heartrate > 140 ? 8 : 4;
+            const calories = match.duration * intensity;
+            return {
+              id: match.diarys_id,
+              title: "運動",
+              time: extractTime(match.create_time),
+              type: "exercise" as const,
+              calories,
+            };
+          });
+
+        if (result) {
+          console.log("➡️ 推入項目:", result);
+          items.push(result);
+        }
+      }
+
+      return {
+        date,
+        foodCount: items.filter((i) => i.type === "food").length,
+        exerciseCount: items.filter((i) => i.type === "exercise").length,
+        items,
+      };
+    },
+  );
+
+  return finalData;
+}
+
 export default function Diary({ user }: DiaryProps) {
   const [userName, setUserName] = useState("");
   const [dailyData, setDailyData] = useState<DailyGroupData[]>([]);
@@ -34,84 +209,13 @@ export default function Diary({ user }: DiaryProps) {
   const [modalMessage, setModalMessage] = useState("");
 
   useEffect(() => {
-    const fetchUserName = async () => {
-      const { data, error } = await supabase
-        .from("users")
-        .select("name")
-        .eq("id", user.id)
-        .single();
-
-      if (error) {
-        console.error("取得使用者名稱失敗:", error);
-        return;
-      }
-      setUserName(data?.name ?? "");
-    };
-
-    fetchUserName();
+    getUserName(user.id).then(setUserName);
+    getDiaryData(user.id).then(setDailyData);
   }, [user.id]);
 
   useEffect(() => {
-    const mockData: DailyGroupData[] = [
-      {
-        date: "2025/05/15",
-        foodCount: 2,
-        exerciseCount: 1,
-        items: [
-          {
-            id: "1",
-            time: "08:30",
-            title: "白飯",
-            type: "food",
-            calories: 450,
-          },
-          {
-            id: "2",
-            time: "12:00",
-            title: "跑步",
-            type: "exercise",
-            calories: 300,
-          },
-          {
-            id: "3",
-            time: "20:00",
-            title: "雞胸肉",
-            type: "food",
-            calories: 350,
-          },
-        ],
-      },
-      {
-        date: "2025/05/14",
-        foodCount: 1,
-        exerciseCount: 2,
-        items: [
-          {
-            id: "4",
-            time: "09:00",
-            title: "饅頭",
-            type: "food",
-            calories: 320,
-          },
-          {
-            id: "5",
-            time: "10:30",
-            title: "跳繩",
-            type: "exercise",
-            calories: 250,
-          },
-          {
-            id: "6",
-            time: "18:00",
-            title: "游泳",
-            type: "exercise",
-            calories: 400,
-          },
-        ],
-      },
-    ];
-    setDailyData(mockData);
-  }, []);
+    console.log("✅ dailyData 更新：", dailyData);
+  }, [dailyData]);
 
   const showMessage = (msg: string) => {
     setModalMessage(msg);
