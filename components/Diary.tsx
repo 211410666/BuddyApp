@@ -210,7 +210,86 @@ export default function Diary({ user }: DiaryProps) {
 
   useEffect(() => {
     getUserName(user.id).then(setUserName);
-    getDiaryData(user.id).then(setDailyData);
+    // getDiaryData(user.id).then(setDailyData);
+    setDailyData([
+      {
+        date: "2025-05-15",
+        foodCount: 2,
+        exerciseCount: 1,
+        items: [
+          {
+            id: "f1",
+            title: "白飯",
+            time: "08:00",
+            type: "food",
+            calories: 300,
+          },
+          {
+            id: "f2",
+            title: "便當",
+            time: "12:00",
+            type: "food",
+            calories: 650,
+          },
+          {
+            id: "e1",
+            title: "跑步",
+            time: "18:00",
+            type: "exercise",
+            calories: 450,
+          },
+        ],
+      },
+      {
+        date: "2025-05-14",
+        foodCount: 1,
+        exerciseCount: 2,
+        items: [
+          {
+            id: "e2",
+            title: "游泳",
+            time: "07:30",
+            type: "exercise",
+            calories: 600,
+          },
+          {
+            id: "f3",
+            title: "饅頭",
+            time: "09:00",
+            type: "food",
+            calories: 220,
+          },
+          {
+            id: "e3",
+            title: "跳繩",
+            time: "21:00",
+            type: "exercise",
+            calories: 300,
+          },
+        ],
+      },
+      {
+        date: "2025-05-13",
+        foodCount: 1,
+        exerciseCount: 1,
+        items: [
+          {
+            id: "f4",
+            title: "麵包",
+            time: "10:00",
+            type: "food",
+            calories: 280,
+          },
+          {
+            id: "e4",
+            title: "重訓",
+            time: "17:00",
+            type: "exercise",
+            calories: 500,
+          },
+        ],
+      },
+    ]);
   }, [user.id]);
 
   useEffect(() => {
