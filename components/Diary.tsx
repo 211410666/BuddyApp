@@ -1,215 +1,156 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
-import { supabase } from '../lib/supabase';
-import CustomModal from './CustomModal';
-import Common_styles from '../lib/common_styles';
+import React, { useEffect, useState } from "react";
+import { SafeAreaView, ScrollView, StyleSheet } from "react-native";
+import CustomModal from "./CustomModal";
+import DailyCalorieSection from "./diaries/DailyCalorieSection";
+import DiaryHeader from "./diaries/DiaryHeader";
+import { supabase } from "../lib/supabase";
+import { UsersTable } from "../lib/types";
 
-export default function Diary({ user }: any) {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [nameInput, setNameInput] = useState('');
-  const [message, setMessage] = useState('');
-  const [customModalVisible, setCustomModalVisible] = useState(false);
-  const [userName, setUserName] = useState('');
-  const [diarys, setDiarys] = useState<any[]>([]);
-  const [selectedItem, setSelectedItem] = useState<any>(null); // 用來儲存選中的 diary
+interface DiaryProps {
+  user: Pick<UsersTable, "id">;
+}
 
-  useEffect(() => {
-    const fetchDiarys = async () => {
-      const { data, error } = await supabase
-        .from('diarys')
-        .select('*')
-        .eq('owner', user.id)
-        .order('create_time', { ascending: false });
+type EntryType = "food" | "exercise";
 
-      if (error) {
-        setMessage('Failed to fetch diarys:');
-      } else {
-        // 先 food 再 exercise 排序
-        const sorted = data.sort((a, b) => {
-          const dateA = new Date(a.create_time).toISOString().substring(0, 10);
-          const dateB = new Date(b.create_time).toISOString().substring(0, 10);
+interface EntryItem {
+  id: string;
+  title: string;
+  time: string;
+  type: EntryType;
+  calories: number;
+}
 
-          if (dateA === dateB) {
-            return a.category === 'food' ? -1 : 1;
-          }
-          return dateA > dateB ? -1 : 1;
-        });
+interface DailyGroupData {
+  date: string;
+  foodCount: number;
+  exerciseCount: number;
+  items: EntryItem[];
+}
 
-        setDiarys(sorted);
-      }
-    };
-
-    fetchDiarys();
-  }, [user.id]);
+export default function Diary({ user }: DiaryProps) {
+  const [userName, setUserName] = useState("");
+  const [dailyData, setDailyData] = useState<DailyGroupData[]>([]);
+  const [isMessageModalVisible, setIsMessageModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
 
   useEffect(() => {
     const fetchUserName = async () => {
       const { data, error } = await supabase
-        .from('users')
-        .select('name')
-        .eq('id', user.id)
+        .from("users")
+        .select("name")
+        .eq("id", user.id)
         .single();
 
       if (error) {
-        console.error('Failed to fetch user name:', error);
-      } else {
-        setUserName(data.name || '');
+        console.error("取得使用者名稱失敗:", error);
+        return;
       }
+      setUserName(data?.name ?? "");
     };
 
     fetchUserName();
   }, [user.id]);
 
+  useEffect(() => {
+    const mockData: DailyGroupData[] = [
+      {
+        date: "2025/05/15",
+        foodCount: 2,
+        exerciseCount: 1,
+        items: [
+          {
+            id: "1",
+            time: "08:30",
+            title: "白飯",
+            type: "food",
+            calories: 450,
+          },
+          {
+            id: "2",
+            time: "12:00",
+            title: "跑步",
+            type: "exercise",
+            calories: 300,
+          },
+          {
+            id: "3",
+            time: "20:00",
+            title: "雞胸肉",
+            type: "food",
+            calories: 350,
+          },
+        ],
+      },
+      {
+        date: "2025/05/14",
+        foodCount: 1,
+        exerciseCount: 2,
+        items: [
+          {
+            id: "4",
+            time: "09:00",
+            title: "饅頭",
+            type: "food",
+            calories: 320,
+          },
+          {
+            id: "5",
+            time: "10:30",
+            title: "跳繩",
+            type: "exercise",
+            calories: 250,
+          },
+          {
+            id: "6",
+            time: "18:00",
+            title: "游泳",
+            type: "exercise",
+            calories: 400,
+          },
+        ],
+      },
+    ];
+    setDailyData(mockData);
+  }, []);
+
   const showMessage = (msg: string) => {
-    setMessage(msg);
-    setCustomModalVisible(true);
+    setModalMessage(msg);
+    setIsMessageModalVisible(true);
   };
 
-  const handleItemPress = (item: any) => {
-    setSelectedItem(item);
-    setModalVisible(true);
+  const closeMessageModal = () => {
+    setIsMessageModalVisible(false);
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.row}>
-        <Text style={styles.nameText}>{userName} 您好!</Text>
-        <TouchableOpacity
-          style={styles.editBtn}
-          onPress={() => {
-            setNameInput(userName);
-            setModalVisible(true);
-          }}
-        >
-          <Text style={styles.editText}>修改姓名</Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <DiaryHeader userName={userName} />
 
-      <View>
-        {diarys.map((item, index) => {
-          const currentDate = new Date(item.create_time).toISOString().substring(0, 10); // 取得日期格式
-          const previousDate = index > 0 ? new Date(diarys[index - 1].create_time).toISOString().substring(0, 10) : null;
+        {dailyData.map((day) => (
+          <DailyCalorieSection
+            key={day.date}
+            date={day.date}
+            foodCount={day.foodCount}
+            exerciseCount={day.exerciseCount}
+            items={day.items}
+          />
+        ))}
 
-          const isNewDate = currentDate !== previousDate;
-
-          return (
-            <View key={item.diary_id}>
-              {/* 只顯示不同日期的分隔線 */}
-              {isNewDate && index !== 0 && (
-                <View style={styles.divider}></View>
-              )}
-
-              {/* 顯示日記項目 */}
-              <TouchableOpacity onPress={() => handleItemPress(item)}>
-                <View style={styles.diaryItem}>
-                  <Text style={styles.diaryText}>
-                    {item.create_time
-                      ? new Date(item.create_time).toLocaleDateString('zh-TW')
-                      : '無時間資料'}{' '}
-                    的 {item.category === 'food' ? '飲食紀錄' : item.category === 'exercise' ? '運動紀錄' : ''}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-      </View>
-
-      {/* Modal for editing name */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.overlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Diary ID: {selectedItem?.diary_id}</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>關閉</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Error / success message */}
-      <CustomModal
-        visible={customModalVisible}
-        message={message}
-        onClose={() => setCustomModalVisible(false)}
-      />
-    </View>
+        <CustomModal
+          visible={isMessageModalVisible}
+          message={modalMessage}
+          onClose={closeMessageModal}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 40,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  nameText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginRight: 16,
-  },
-  editBtn: {
-    backgroundColor: '#4caf50',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  editText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  diaryItem: {
-    marginBottom: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  diaryText: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  divider: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    marginVertical: 10,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    padding: 24,
-    borderRadius: 12,
-    width: '80%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  closeButton: {
-    backgroundColor: '#4caf50',
-    padding: 10,
-    borderRadius: 6,
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    flexGrow: 1,
+    padding: 64,
+    backgroundColor: "#fff",
   },
 });
