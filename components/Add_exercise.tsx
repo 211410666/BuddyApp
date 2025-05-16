@@ -174,6 +174,7 @@ const Add_exercise = ({ user }: Props) => {
                 <TextInput
                     style={Common_styles.input}
                     placeholder="輸入平均運動心率"
+                    placeholderTextColor="rgba(60, 130, 245, 0.5)"
                     value={heartRate}
                     onChangeText={setHeartRate}
                 />

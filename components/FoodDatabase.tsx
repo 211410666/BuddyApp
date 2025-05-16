@@ -107,6 +107,7 @@ const FoodDatabase = ({ user }: Props) => {
                     <TextInput
                         style={Common_styles.input}
                         placeholder="輸入新增食物名稱"
+                        placeholderTextColor="rgba(60, 130, 245, 0.5)"
                         value={newFoodName}
                         onChangeText={setNewFoodName}
                     />
@@ -115,18 +116,21 @@ const FoodDatabase = ({ user }: Props) => {
                     <TextInput
                         style={[Common_styles.input, { flex: 2, marginRight: 5 }]}
                         placeholder="蛋白質"
+                        placeholderTextColor="rgba(60, 130, 245, 0.5)"
                         value={protein}
                         onChangeText={setProtein}
                     />
                     <TextInput
                         style={[Common_styles.input, { flex: 2, marginRight: 5 }]}
                         placeholder="碳水化合物"
+                        placeholderTextColor="rgba(60, 130, 245, 0.5)"
                         value={carbohydrates}
                         onChangeText={setCarbohydrates}
                     />
                     <TextInput
                         style={[Common_styles.input, { flex: 2, marginRight: 5 }]}
                         placeholder="脂肪"
+                        placeholderTextColor="rgba(60, 130, 245, 0.5)"
                         value={fat}
                         onChangeText={setFat}
                     />
@@ -140,7 +144,7 @@ const FoodDatabase = ({ user }: Props) => {
 
                 {result_FoodData.length > 0 ? (
                     result_FoodData.map((item, index) => (
-                        <View key={index} style={Common_styles.diaryItem}>
+                        <View key={index} style={[Common_styles.diaryItem, { backgroundColor: '#4361a3' }]}>
                             <Text style={Common_styles.category}>
                                 {item.owner_name}
                             </Text>

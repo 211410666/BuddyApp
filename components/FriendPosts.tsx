@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { supabase } from '../lib/supabase'
 import LoadingModal from './LoadingModal'
+import Common_styles from '../lib/common_styles'
 interface Props {
     user: any
 }
@@ -200,44 +201,41 @@ const FriendPosts = ({ user }: Props) => {
         fetchFriendDiarys()
     }
 
-
-
     return (
-        <View style={styles.container}>
-            <ScrollView style={styles.scrollContainer}>
+        <View style={Common_styles.friendContainer}>
+            <ScrollView >
                 {friendDiaryData.length > 0 ? (
                     friendDiaryData.map((item, index) => (
-                        <View key={index} style={styles.diaryItem}>
-                            <Text style={styles.category}>
+                        <View key={index} style={Common_styles.diaryItem}>
+                            <Text style={Common_styles.category}>
                                 {item.owner_name}
                             </Text>
-                            <Text style={styles.name}>發布了一筆{item.category}紀錄</Text>
-                            <Text style={styles.details}>
+                            <Text style={[Common_styles.name,{color:'#555'}]}>發布了一筆{item.category}紀錄</Text>
+                            <Text style={[Common_styles.details,{color:'#666'}]}>
                                 {item.category === '飲食'
                                     ? `食物名稱: ${item.food_name}`
                                     : `運動持續時間: ${formatDuration(item.duration)}，心跳率: ${item.heartrate}`}
                             </Text>
-                            <Text style={styles.createTime}>
+                            <Text style={Common_styles.createTime}>
                                 發布時間: {new Date(item.create_time).toLocaleString('zh-TW', {
                                     timeZone: 'Asia/Taipei',
                                     hour12: false,
                                 })}
                             </Text>
-                            <View style={styles.likeContainer}>
+                            <View style={Common_styles.likeContainer}>
                                 <TouchableOpacity
-                                    style={styles.likeContainer}
+                                    style={Common_styles.likeContainer}
                                     onPress={() => handleLikeToggle(item)}
                                 >
-                                    <Text style={[styles.likeIcon, { color: item.is_good ? 'red' : 'gray' }]}>
+                                    <Text style={[Common_styles.likeIcon, { color: item.is_good ? 'red' : 'gray' }]}>
                                         {item.is_good ? '❤️' : '🤍'}
                                     </Text>
                                 </TouchableOpacity>
-
                             </View>
                         </View>
                     ))
                 ) : (
-                    <Text style={styles.noData}>目前無好友的日記資料</Text>
+                    <Text style={Common_styles.noData}>目前無好友的日記資料</Text>
                 )}
             </ScrollView>
             <LoadingModal visible={loading} />
@@ -247,64 +245,3 @@ const FriendPosts = ({ user }: Props) => {
 
 export default FriendPosts
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 12,
-        backgroundColor: '#818080',
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 12,
-    },
-    scrollContainer: {
-        marginBottom: 20,
-    },
-    diaryItem: {
-        padding: 10,
-        backgroundColor: '#fff',
-        marginBottom: 10,
-        borderRadius: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        position: 'relative', // ✅ 為了讓 likeIcon 可以絕對定位
-
-    },
-    category: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    name: {
-        fontSize: 14,
-        color: '#555',
-        marginBottom: 4,
-    },
-    details: {
-        fontSize: 14,
-        color: '#666',
-    },
-    createTime: {
-        fontSize: 12,
-        color: '#888',
-        marginTop: 8,
-    },
-    noData: {
-        fontSize: 16,
-        color: '#999',
-        textAlign: 'center',
-    },
-    likeContainer: {
-        position: 'absolute',
-        bottom: 8,
-        right: 8,
-    },
-    likeIcon: {
-        fontSize: 20,
-    },
-
-})

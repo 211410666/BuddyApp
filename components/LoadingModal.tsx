@@ -1,5 +1,5 @@
 import React from 'react'
-import { Modal, View, Text, ActivityIndicator, StyleSheet } from 'react-native'
+import { Modal, View, Text, ActivityIndicator, StyleSheet,Image } from 'react-native'
 
 interface LoadingModalProps {
   visible: boolean
@@ -10,8 +10,12 @@ const LoadingModal = ({ visible }: LoadingModalProps) => {
     <Modal transparent animationType="fade" visible={visible}>
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <ActivityIndicator size="large" color="#4CAF50" />
-          <Text style={styles.text}>資料庫讀取中...</Text>
+          <Image
+            source={require('../assets/loading.png')}
+            style={styles.textImage}
+            resizeMode="contain"
+          />
+          <ActivityIndicator size="large" color="#2563eb" />
         </View>
       </View>
     </Modal>
@@ -21,6 +25,11 @@ const LoadingModal = ({ visible }: LoadingModalProps) => {
 export default LoadingModal
 
 const styles = StyleSheet.create({
+  textImage: {
+    width: 120,
+    height: 120,
+    marginBottom: 5,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',

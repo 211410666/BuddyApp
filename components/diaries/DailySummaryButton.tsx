@@ -32,9 +32,9 @@ const styles = StyleSheet.create({
   button: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: "#f8f8f8",
-    borderRadius: 8,
-    marginVertical: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    //marginVertical: 6,
+    marginBottom: 6,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

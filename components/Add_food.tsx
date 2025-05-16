@@ -9,8 +9,6 @@ interface Props {
     user: any
 }
 
-
-
 const Add_food = ({ user }: Props) => {
     const [searchFoodName, setSearchFoodName] = useState('');
     const [message, setModalMessage] = useState('');
@@ -132,6 +130,7 @@ const Add_food = ({ user }: Props) => {
                     <TextInput
                         style={Common_styles.input}
                         placeholder="輸入搜尋食物名稱"
+                        placeholderTextColor="rgba(60, 130, 245, 0.5)"
                         value={searchFoodName}
                         onChangeText={setSearchFoodName}
                     />

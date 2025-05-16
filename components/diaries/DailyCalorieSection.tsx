@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import DailySummaryButton from "./DailySummaryButton";
 import CalorieEntryItem from "./CalorieEntryItem";
-
+import Common_styles from "../../lib/common_styles";
 type EntryType = "food" | "exercise";
 
 type EntryItem = {
@@ -49,7 +49,7 @@ export default function DailyCalorieSection({
   };
 
   return (
-    <View style={styles.section}>
+    <View style={Common_styles.section}>
       <DailySummaryButton
         date={date}
         foodCount={foodCount}
@@ -59,10 +59,10 @@ export default function DailyCalorieSection({
       />
 
       {expanded && (
-        <View style={styles.expandArea}>
-          <View style={styles.divider} />
+        <View style={Common_styles.expandArea}>
+          <View style={Common_styles.divider} />
           {items.length === 0 ? (
-            <Text style={styles.emptyText}>這天沒有紀錄喔！</Text>
+            <Text style={Common_styles.emptyText}>這天沒有紀錄喔！</Text>
           ) : (
             items.map((entry) => (
               <CalorieEntryItem
@@ -74,31 +74,10 @@ export default function DailyCalorieSection({
               />
             ))
           )}
-          <View style={styles.divider} />
+          <View style={Common_styles.divider} />
         </View>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: 12,
-  },
-  expandArea: {
-    backgroundColor: "#fafafa",
-    borderRadius: 8,
-    overflow: "hidden",
-    marginTop: 6,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#ccc",
-  },
-  emptyText: {
-    padding: 16,
-    textAlign: "center",
-    fontSize: 14,
-    color: "#888",
-  },
-});
