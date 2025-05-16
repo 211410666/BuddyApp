@@ -1,229 +1,339 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
-import { supabase } from '../lib/supabase';
-import Common_styles from '../lib/common_styles';
-import ErrorModal from './ErrorModal';
-import LoadingModal from './LoadingModal';
-import SuccessModal from './SuccesModal';
+import React, { useEffect, useState } from "react";
+import { SafeAreaView, ScrollView, StyleSheet } from "react-native";
+import CustomModal from "./CustomModal";
+import DailyCalorieSection from "./diaries/DailyCalorieSection";
+import DiaryHeader from "./diaries/DiaryHeader";
+import { supabase } from "../lib/supabase";
+import { UsersTable } from "../lib/types";
+import { match } from "ts-pattern";
 
-export default function Diary({ user }: any) {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [nameInput, setNameInput] = useState('');
-  const [message, setMessage] = useState('');
-  const [customModalVisible, setCustomModalVisible] = useState(false);
-  const [userName, setUserName] = useState('');
-  const [diarys, setDiarys] = useState<any[]>([]);
-  const [selectedItem, setSelectedItem] = useState<any>(null); // 用來儲存選中的 diary
-  const [loadingVisble, setLoadingVisble] = useState(false)
-  const [errorVisible, setErrorVisible] = useState(false)
-  const [successVisible, setSuccessVisible] = useState(false)
+interface DiaryProps {
+  user: Pick<UsersTable, "id">;
+}
+
+type EntryType = "food" | "exercise";
+
+interface EntryItem {
+  id: string;
+  title: string;
+  time: string;
+  type: EntryType;
+  calories: number;
+}
+
+interface DailyGroupData {
+  date: string;
+  foodCount: number;
+  exerciseCount: number;
+  items: EntryItem[];
+}
+
+async function getUserName(userId: string): Promise<string> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("name")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    console.error("取得使用者名稱失敗:", error);
+    return "";
+  }
+  if (!data) {
+    console.error("[User Name] Can not fetch user name");
+    return "";
+  }
+  // console.log("[User Name]: ", data.name);
+  return data.name ?? "";
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toISOString().split("T")[0];
+}
+
+function extractTime(timestamp: string): string {
+  return new Date(timestamp).toLocaleTimeString("zh-TW", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+async function fetchDiaryEntries(userId: string) {
+  console.log("[Diary Entries] 傳入的 userId 是：", userId);
+  const { data, error } = await supabase
+    .from("diarys")
+    .select("*")
+    .eq("owner", userId)
+    .order("create_time", { ascending: false });
+  if (error) {
+    console.error(`[Fetch Diaries] error: ${error}`);
+    return [];
+  }
+  if (!data || data.length === 0) {
+    console.error("[Fetch Diaries] Data is empty");
+    return [];
+  }
+  console.log("📘 diaryList:", data);
+  return data;
+}
+
+async function fetchFoodRecords(diaryIds: string[]) {
+  const { data, error } = await supabase
+    .from("diary_food")
+    .select("diarys_id, food_id, create_time")
+    .in("diarys_id", diaryIds);
+  if (error) {
+    console.error("[Food Records] Error: ", error);
+    return [];
+  }
+  if (!data || data.length === 0) {
+    console.error("[Food Records] Data is empty");
+    return [];
+  }
+  console.log("🥬 foodRecords:", data);
+  return data;
+}
+
+async function fetchExerciseRecords(diaryIds: string[]) {
+  const { data, error } = await supabase
+    .from("diary_exercise")
+    .select("diarys_id, avg_heartrate, duration, create_time")
+    .in("diarys_id", diaryIds);
+  if (error) {
+    console.error("[Exercise Records] Error: ", error);
+    return [];
+  }
+  if (!data || data.length === 0) {
+    console.error("[Exercise Records] Data is empty");
+    return [];
+  }
+  console.log("🏃‍♂️ exerciseRecords:", data);
+  return data;
+}
+
+async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
+  console.log("[Diary Data] 傳入的 userId 是：", userId);
+  const isValidUser = await supabase.from("users").select("*").eq("id", userId);
+  if (!isValidUser) {
+    console.error("[Diary Data] Not Valid User");
+    return [];
+  }
+  console.log(isValidUser);
+  const diaryList = await fetchDiaryEntries(userId);
+  const diaryIds = diaryList.map((d) => d.diary_id);
+
+  const foodRecords = await fetchFoodRecords(diaryIds);
+  const exerciseRecords = await fetchExerciseRecords(diaryIds);
+
+  const groupedByDate: Record<
+    string,
+    { diary_id: string; category: string }[]
+  > = {};
+  for (const diary of diaryList) {
+    const date = formatDate(diary.create_time);
+    if (!groupedByDate[date]) groupedByDate[date] = [];
+    groupedByDate[date].push({
+      diary_id: diary.diary_id,
+      category: diary.category,
+    });
+  }
+
+  const finalData: DailyGroupData[] = Object.entries(groupedByDate).map(
+    ([date, entries]) => {
+      const items: EntryItem[] = [];
+
+      for (const diary of entries) {
+        const result = match(diary.category)
+          .with("food", () => {
+            console.log("📌 處理 food category:", diary);
+            const match = foodRecords.find(
+              (f) => f.diarys_id === diary.diary_id,
+            );
+            if (!match) {
+              console.log("❌ 沒有找到對應的 food record");
+              return null;
+            }
+            console.log("✅ 找到對應 food record:", match);
+            return {
+              id: match.diarys_id,
+              title: `食物 #${match.food_id}`,
+              time: extractTime(match.create_time),
+              type: "food" as const,
+              calories: 0,
+            };
+          })
+          .with("exercise", () => {
+            console.log("📌 處理 exercise category:", diary);
+            const match = exerciseRecords.find(
+              (e) => e.diarys_id === diary.diary_id,
+            );
+            if (!match) {
+              console.log("❌ 沒有找到對應的 exercise record");
+              return null;
+            }
+            console.log("✅ 找到對應 exercise record:", match);
+            const intensity = match.avg_heartrate > 140 ? 8 : 4;
+            const calories = match.duration * intensity;
+            return {
+              id: match.diarys_id,
+              title: "運動",
+              time: extractTime(match.create_time),
+              type: "exercise" as const,
+              calories,
+            };
+          });
+
+        if (result) {
+          console.log("➡️ 推入項目:", result);
+          items.push(result);
+        }
+      }
+
+      return {
+        date,
+        foodCount: items.filter((i) => i.type === "food").length,
+        exerciseCount: items.filter((i) => i.type === "exercise").length,
+        items,
+      };
+    },
+  );
+
+  return finalData;
+}
+
+export default function Diary({ user }: DiaryProps) {
+  const [userName, setUserName] = useState("");
+  const [dailyData, setDailyData] = useState<DailyGroupData[]>([]);
+  const [isMessageModalVisible, setIsMessageModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
 
   useEffect(() => {
-    const fetchDiarys = async () => {
-      setLoadingVisble(true)
-      const { data, error } = await supabase
-        .from('diarys')
-        .select('*')
-        .eq('owner', user.id)
-        .order('create_time', { ascending: false });
-
-      if (error) {
-        setMessage('Failed to fetch diarys:');
-      } else {
-        // 先 food 再 exercise 排序
-        const sorted = data.sort((a, b) => {
-          const dateA = new Date(a.create_time).toISOString().substring(0, 10);
-          const dateB = new Date(b.create_time).toISOString().substring(0, 10);
-
-          if (dateA === dateB) {
-            return a.category === 'food' ? -1 : 1;
-          }
-          return dateA > dateB ? -1 : 1;
-        });
-
-        setDiarys(sorted);
-      }
-      setLoadingVisble(false);
-    };
-
-    fetchDiarys();
+    getUserName(user.id).then(setUserName);
+    // getDiaryData(user.id).then(setDailyData);
+    setDailyData([
+      {
+        date: "2025-05-15",
+        foodCount: 2,
+        exerciseCount: 1,
+        items: [
+          {
+            id: "f1",
+            title: "白飯",
+            time: "08:00",
+            type: "food",
+            calories: 300,
+          },
+          {
+            id: "f2",
+            title: "便當",
+            time: "12:00",
+            type: "food",
+            calories: 650,
+          },
+          {
+            id: "e1",
+            title: "跑步",
+            time: "18:00",
+            type: "exercise",
+            calories: 450,
+          },
+        ],
+      },
+      {
+        date: "2025-05-14",
+        foodCount: 1,
+        exerciseCount: 2,
+        items: [
+          {
+            id: "e2",
+            title: "游泳",
+            time: "07:30",
+            type: "exercise",
+            calories: 600,
+          },
+          {
+            id: "f3",
+            title: "饅頭",
+            time: "09:00",
+            type: "food",
+            calories: 220,
+          },
+          {
+            id: "e3",
+            title: "跳繩",
+            time: "21:00",
+            type: "exercise",
+            calories: 300,
+          },
+        ],
+      },
+      {
+        date: "2025-05-13",
+        foodCount: 1,
+        exerciseCount: 1,
+        items: [
+          {
+            id: "f4",
+            title: "麵包",
+            time: "10:00",
+            type: "food",
+            calories: 280,
+          },
+          {
+            id: "e4",
+            title: "重訓",
+            time: "17:00",
+            type: "exercise",
+            calories: 500,
+          },
+        ],
+      },
+    ]);
   }, [user.id]);
 
   useEffect(() => {
-    const fetchUserName = async () => {
-      setLoadingVisble(true);
-      const { data, error } = await supabase
-        .from('users')
-        .select('name')
-        .eq('id', user.id)
-        .single();
+    console.log("✅ dailyData 更新：", dailyData);
+  }, [dailyData]);
 
-      if (error) {
-        console.error('Failed to fetch user name:', error);
-      } else {
-        setUserName(data.name || '');
-      }
-      setLoadingVisble(false)
-    };
+  const showMessage = (msg: string) => {
+    setModalMessage(msg);
+    setIsMessageModalVisible(true);
+  };
 
-    fetchUserName();
-  }, [user.id]);
-
-  const handleItemPress = (item: any) => {
-    setSelectedItem(item);
-    setModalVisible(true);
+  const closeMessageModal = () => {
+    setIsMessageModalVisible(false);
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.row}>
-        <Text style={styles.nameText}>{userName} 您好!</Text>
-        <TouchableOpacity
-          style={styles.editBtn}
-          onPress={() => {
-            setNameInput(userName);
-            setModalVisible(true);
-          }}
-        >
-          <Text style={styles.editText}>修改姓名</Text>
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <DiaryHeader userName={userName} />
 
-      <View>
-        {diarys.map((item, index) => {
-          const currentDate = new Date(item.create_time).toISOString().substring(0, 10); // 取得日期格式
-          const previousDate = index > 0 ? new Date(diarys[index - 1].create_time).toISOString().substring(0, 10) : null;
+        {dailyData.map((day) => (
+          <DailyCalorieSection
+            key={day.date}
+            date={day.date}
+            foodCount={day.foodCount}
+            exerciseCount={day.exerciseCount}
+            items={day.items}
+          />
+        ))}
 
-          const isNewDate = currentDate !== previousDate;
-
-          return (
-            <View key={item.diary_id}>
-              {/* 只顯示不同日期的分隔線 */}
-              {isNewDate && index !== 0 && (
-                <View style={styles.divider}></View>
-              )}
-
-              {/* 顯示日記項目 */}
-              <TouchableOpacity onPress={() => handleItemPress(item)}>
-                <View style={styles.diaryItem}>
-                  <Text style={styles.diaryText}>
-                    {item.create_time
-                      ? new Date(item.create_time).toLocaleDateString('zh-TW')
-                      : '無時間資料'}{' '}
-                    的 {item.category === 'food' ? '飲食紀錄' : item.category === 'exercise' ? '運動紀錄' : ''}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-      </View>
-
-      {/* Modal for editing name */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.overlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Diary ID: {selectedItem?.diary_id}</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>關閉</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Error / success message */}
-      <LoadingModal
-        visible={loadingVisble}
-      />
-
-      <ErrorModal
-        visible={errorVisible}
-        message={message}
-        onClose={() => setErrorVisible(false)}
-      />
-
-      <SuccessModal
-        visible={successVisible}
-        message={message}
-        onClose={() => setSuccessVisible(false)}
-      />
-    </View>
+        <CustomModal
+          visible={isMessageModalVisible}
+          message={modalMessage}
+          onClose={closeMessageModal}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 40,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  nameText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginRight: 16,
-  },
-  editBtn: {
-    backgroundColor: '#4caf50',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  editText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  diaryItem: {
-    marginBottom: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  diaryText: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  divider: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    marginVertical: 10,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    padding: 24,
-    borderRadius: 12,
-    width: '80%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  closeButton: {
-    backgroundColor: '#4caf50',
-    padding: 10,
-    borderRadius: 6,
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    flexGrow: 1,
+    padding: 64,
+    backgroundColor: "#fff",
   },
 });
