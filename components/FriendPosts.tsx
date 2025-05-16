@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { supabase } from '../lib/supabase'
 import LoadingModal from './LoadingModal'
 interface Props {
@@ -49,7 +49,6 @@ const FriendPosts = ({ user }: Props) => {
             console.error('❌ diarys 查詢失敗:', diaryError)
             return
         }
-        console.log('📄 好友的日記 ID：', diarys)
 
         const foodDiaryIds = diarys
             .filter(d => d.category === 'food')
@@ -67,7 +66,7 @@ const FriendPosts = ({ user }: Props) => {
                 diarys:diarys_id (
                     owner,
                     users:owner (
-                        name
+                        name,id
                     )
                 )
             `)
@@ -80,7 +79,7 @@ const FriendPosts = ({ user }: Props) => {
                 diarys:diarys_id (
                     owner,
                     users:owner (
-                        name
+                        name,id
                     )
                 )
             `)
@@ -90,10 +89,6 @@ const FriendPosts = ({ user }: Props) => {
             console.error('❌ diary_food 或 diary_exercise 查詢失敗:', dfError || deError)
             return
         }
-
-        console.log('🍱 食物類日記：', diaryFoodData)
-        console.log('🏃‍♂️ 運動類日記：', diaryExerciseData)
-
         // 查詢對應的食物名稱
         const foodIds = diaryFoodData.map((item: any) => item.food_id)
         const { data: foodData, error: foodError } = await supabase
@@ -105,31 +100,52 @@ const FriendPosts = ({ user }: Props) => {
             console.error('❌ 食物資料查詢失敗:', foodError)
             return
         }
-        console.log('🍽 食物資料：', foodData)
-
         // 用食物名稱替換 food_id
         const foodMap = foodData.reduce((acc: any, food: any) => {
             acc[food.food_id] = food.food_name
             return acc
         }, {})
 
+       
+        // 🔍 查出使用者對哪些日記按了讚（限定在 diary_id 為好友的日記）
+        const { data: likedData, error: likedError } = await supabase
+            .from('is_good')
+            .select('diary_id,category')
+            .eq('owner', user.id)
+
+        if (likedError) {
+            console.error('❌ is_good 按讚狀態查詢失敗:', likedError)
+            return
+        }
+        
+
+        const likedDiaryIds = likedData.map(item => item.diary_id)
+
         // 合併 food 和 exercise 類型的日記資料
         const mergedData = [
             ...diaryFoodData.map((food: any) => ({
+                id:food.id,
+                diary_id: food.diarys_id,
+                owner_id: food.diarys.users.id,
                 owner_name: food.diarys?.users?.name,
                 category: '飲食',
                 create_time: food.create_time,
                 food_name: foodMap[food.food_id] || '未知食物', // 替換 food_id 為 food_name
                 duration: null,
                 heartrate: null,
+                is_good: likedDiaryIds.includes(food.id) // ← 新增欄位
             })),
             ...diaryExerciseData.map((exercise: any) => ({
+                id:exercise.id,
+                diary_id: exercise.diarys_id,
+                owner_id: exercise.diarys.users.id,
                 owner_name: exercise.diarys?.users?.name,
                 category: '運動',
                 create_time: exercise.create_time,
                 food_name: null,
                 duration: exercise.duration,
                 heartrate: exercise.avg_heartrate,
+                is_good: likedDiaryIds.includes(exercise.id) // ← 新增欄位
             }))
         ]
 
@@ -142,16 +158,52 @@ const FriendPosts = ({ user }: Props) => {
     }
 
     const formatDuration = (totalSeconds: number) => {
-    const hours = Math.floor(totalSeconds / 3600)
-    const minutes = Math.floor((totalSeconds % 3600) / 60)
-    const seconds = totalSeconds % 60
-    return `${hours}時 ${minutes}分 ${seconds}秒`
-}
+        const hours = Math.floor(totalSeconds / 3600)
+        const minutes = Math.floor((totalSeconds % 3600) / 60)
+        const seconds = totalSeconds % 60
+        return `${hours}時 ${minutes}分 ${seconds}秒`
+    }
+
+    const handleLikeToggle = async (item: any) => {
+
+        if (item.is_good) {
+            // 如果已經按讚，則刪除該紀錄
+            const { error } = await supabase
+                .from('is_good')
+                .delete()
+                .eq('owner', user.id)
+                .eq('diary_id', item.id)
+
+            if (error) {
+                console.error('❌ 刪除按讚失敗:', error)
+                return
+            }
+        } else{
+            // 如果尚未按讚，則新增一筆
+            const { error } = await supabase
+                .from('is_good')
+                .insert([
+                    {
+                        owner: user.id,
+                        diary_id: item.id,
+                        category: item.category,
+                    },
+                ])
+
+            if (error) {
+                console.error('❌ 新增按讚失敗:', error)
+                return
+            }
+        }
+
+        // ✅ 更新畫面：重新取得好友日記
+        fetchFriendDiarys()
+    }
+
 
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>好友的日記</Text>
             <ScrollView style={styles.scrollContainer}>
                 {friendDiaryData.length > 0 ? (
                     friendDiaryData.map((item, index) => (
@@ -171,6 +223,17 @@ const FriendPosts = ({ user }: Props) => {
                                     hour12: false,
                                 })}
                             </Text>
+                            <View style={styles.likeContainer}>
+                                <TouchableOpacity
+                                    style={styles.likeContainer}
+                                    onPress={() => handleLikeToggle(item)}
+                                >
+                                    <Text style={[styles.likeIcon, { color: item.is_good ? 'red' : 'gray' }]}>
+                                        {item.is_good ? '❤️' : '🤍'}
+                                    </Text>
+                                </TouchableOpacity>
+
+                            </View>
                         </View>
                     ))
                 ) : (
@@ -208,6 +271,8 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
+        position: 'relative', // ✅ 為了讓 likeIcon 可以絕對定位
+
     },
     category: {
         fontSize: 16,
@@ -233,4 +298,13 @@ const styles = StyleSheet.create({
         color: '#999',
         textAlign: 'center',
     },
+    likeContainer: {
+        position: 'absolute',
+        bottom: 8,
+        right: 8,
+    },
+    likeIcon: {
+        fontSize: 20,
+    },
+
 })

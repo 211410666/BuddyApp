@@ -3,9 +3,7 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   Modal,
-  Dimensions,
 } from 'react-native'
 import FoodForm from './FoodForm'
 import ExerciseForm from './ExerciseForm'

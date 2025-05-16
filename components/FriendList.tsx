@@ -10,11 +10,18 @@ import {
 } from 'react-native'
 import { supabase } from '../lib/supabase'
 import Common_styles from '../lib/common_styles';
+import ErrorModal from './ErrorModal';
+import LoadingModal from './LoadingModal';
+import SuccessModal from './SuccesModal';
 
-export default function FriendList({ user, showMessage }: { user: any; showMessage: (msg: string) => void }) {
+export default function FriendList({ user }: { user: any; }) {
   const [friends, setFriends] = useState<any[]>([])
   const [pendingRequests, setPendingRequests] = useState<any[]>([])
   const [newFriendEmail, setNewFriendEmail] = useState('')
+  const [message, setModalMessage] = useState('');
+  const [loadingVisble, setLoadingVisble] = useState(false)
+  const [errorVisible, setErrorVisible] = useState(false)
+  const [successVisible, setSuccessVisible] = useState(false)
 
   useEffect(() => {
     fetchFriends()
@@ -22,6 +29,7 @@ export default function FriendList({ user, showMessage }: { user: any; showMessa
   }, [])
 
   const fetchFriends = async () => {
+    setLoadingVisble(true);
     const { data: relations, error } = await supabase
       .from('relations')
       .select('owner_id, target_id')
@@ -53,9 +61,11 @@ export default function FriendList({ user, showMessage }: { user: any; showMessa
     }
 
     setFriends(users || [])
+    setLoadingVisble(false)
   }
 
   const fetchPendingRequests = async () => {
+    setLoadingVisble(true)
     const { data: relations, error } = await supabase
       .from('relations')
       .select('owner_id')
@@ -85,6 +95,7 @@ export default function FriendList({ user, showMessage }: { user: any; showMessa
     }
 
     setPendingRequests(users || [])
+    setLoadingVisble(false)
   }
 
   const handleAcceptFriend = async (friendId: string) => {
@@ -104,7 +115,8 @@ export default function FriendList({ user, showMessage }: { user: any; showMessa
 
     fetchFriends()
     fetchPendingRequests()
-    showMessage('好友申請已通過')
+    setModalMessage('好友申請已通過')
+    setSuccessVisible(true)
   }
 
   const handDelFriend = async (friendId: string) => {
@@ -122,7 +134,8 @@ export default function FriendList({ user, showMessage }: { user: any; showMessa
 
     fetchFriends()
     fetchPendingRequests()
-    showMessage('刪除成功!')
+    setModalMessage('刪除成功!')
+    setSuccessVisible(true);
   }
 
   const handleAddFriend = async () => {
@@ -138,12 +151,14 @@ export default function FriendList({ user, showMessage }: { user: any; showMessa
       .single()
 
     if (error || !targetUser) {
-      showMessage('找不到該用戶')
+      setModalMessage('找不到該用戶')
+      setErrorVisible(true)
       return
     }
 
     if (targetUser.id === user.id) {
-      showMessage('不能新增自己為好友')
+      setModalMessage('不能新增自己為好友')
+      setErrorVisible(true)
       return
     }
 
@@ -156,8 +171,10 @@ export default function FriendList({ user, showMessage }: { user: any; showMessa
 
     if (existingRelation && existingRelation.length > 0) {
       const state = existingRelation[0].relation_state
-      if (state === 1) return showMessage('你們已經是好友了')
-      if (state === 0) return showMessage('好友申請正在等待對方同意')
+      console.log(state);
+      if (state === 1) { setModalMessage('你們已經是好友了'); setErrorVisible(true);}
+      if (state === 0) { console.log("???");setModalMessage('好友申請正在等待對方同意'); setErrorVisible(true);}
+      return;
     }
 
     const { error: insertError } = await supabase
@@ -169,11 +186,13 @@ export default function FriendList({ user, showMessage }: { user: any; showMessa
       })
 
     if (insertError) {
-      showMessage('新增好友失敗')
+      setModalMessage('新增好友失敗')
+      setErrorVisible(true)
       return
     }
 
-    showMessage('新增好友成功,等待通過申請')
+    setModalMessage('新增好友成功,等待通過申請')
+    setSuccessVisible(true)
     setNewFriendEmail('')
   }
 
@@ -228,6 +247,21 @@ export default function FriendList({ user, showMessage }: { user: any; showMessa
           </View>
         )}
         ListEmptyComponent={<Text>目前沒有待通過申請</Text>}
+      />
+      <LoadingModal
+        visible={loadingVisble}
+      />
+
+      <ErrorModal
+        visible={errorVisible}
+        message={message}
+        onClose={() => setErrorVisible(false)}
+      />
+
+      <SuccessModal
+        visible={successVisible}
+        message={message}
+        onClose={() => setSuccessVisible(false)}
       />
     </View>
   )

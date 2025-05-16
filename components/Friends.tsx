@@ -10,18 +10,12 @@ import {
 import CustomModal from './CustomModal'
 import FriendList from './FriendList'
 import FriendPosts from './FriendPosts'
+import FriendMessage from './FriendMessage'
 
 
 export default function Friends({ user }: any) {
   const [activeTab, setActiveTab] = useState<'posts' | 'notifications' | 'list' | 'message'>('posts')
-  const [message, setModalMessage] = useState('');
-  const [modalVisible, setModalVisible] = useState(false)
 
-
-  const showMessage = (msg: string) => {
-    setModalMessage(msg)
-    setModalVisible(true)
-  }
   return (
     <View style={styles.container}>
       {/* Top Navbar */}
@@ -50,13 +44,11 @@ export default function Friends({ user }: any) {
       <ScrollView style={styles.content}>
         {activeTab === 'posts' && <FriendPosts user={user} />}
         {activeTab === 'list' && (
-          <FriendList user={user} showMessage={showMessage} />
+          <FriendList user={user} />
         )}
 
-        {activeTab === 'message' && <Text>訊息</Text>}
+        {activeTab === 'message' && <FriendMessage user={user}/>}
       </ScrollView>
-
-      <CustomModal visible={modalVisible} message={message} onClose={() => setModalVisible(false)} />
     </View>
   )
 }
