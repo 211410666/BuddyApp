@@ -3,45 +3,43 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  Dimensions,
   ScrollView,
 } from 'react-native'
-import CustomModal from './CustomModal'
 import FriendList from './FriendList'
 import FriendPosts from './FriendPosts'
 import FriendMessage from './FriendMessage'
+import Common_styles from '../lib/common_styles'
 
 
 export default function Friends({ user }: any) {
   const [activeTab, setActiveTab] = useState<'posts' | 'notifications' | 'list' | 'message'>('posts')
 
   return (
-    <View style={styles.container}>
+    <View style={Common_styles.full_container}>
       {/* Top Navbar */}
-      <View style={styles.navbar}>
+      <View style={Common_styles.navbar}>
         <TouchableOpacity
-          style={[styles.navButton, activeTab === 'posts' && styles.activeTab]}
+          style={[Common_styles.navButton, activeTab === 'posts' && Common_styles.activeTab]}
           onPress={() => setActiveTab('posts')}
         >
-          <Text style={styles.navText}>動態牆</Text>
+          <Text style={Common_styles.navText}>動態牆</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.navButton, activeTab === 'list' && styles.activeTab]}
+          style={[Common_styles.navButton, activeTab === 'list' && Common_styles.activeTab]}
           onPress={() => setActiveTab('list')}
         >
-          <Text style={styles.navText}>好友列表</Text>
+          <Text style={Common_styles.navText}>好友列表</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.navButton, activeTab === 'message' && styles.activeTab]}
+          style={[Common_styles.navButton, activeTab === 'message' && Common_styles.activeTab]}
           onPress={() => setActiveTab('message')}
         >
-          <Text style={styles.navText}>訊息</Text>
+          <Text style={Common_styles.navText}>訊息</Text>
         </TouchableOpacity>
       </View>
 
       {/* Content */}
-      <ScrollView style={styles.content}>
+      <ScrollView style={Common_styles.content}>
         {activeTab === 'posts' && <FriendPosts user={user} />}
         {activeTab === 'list' && (
           <FriendList user={user} />
@@ -52,39 +50,3 @@ export default function Friends({ user }: any) {
     </View>
   )
 }
-
-const { width, height } = Dimensions.get('window')
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  navbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#a0dca0',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  navButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  activeTab: {
-    backgroundColor: '#87c587',
-  },
-  navText: {
-    fontSize: 16,
-    color: '#1a4d1a',
-    fontWeight: 'bold',
-  },
-  content: {
-    flex: 1,
-    paddingTop: 20,
-    paddingHorizontal: 16,
-  },
-})
-

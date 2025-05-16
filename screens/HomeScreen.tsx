@@ -15,7 +15,7 @@ export default function HomeScreen({ route }: any) {
   const renderContent = () => {
     switch (activeTab) {
       case '分析':
-        return <Analysis />
+        return <Analysis user={user}/>
       case '好友':
         return <Friends user={user}/>
       case '新增數據':
