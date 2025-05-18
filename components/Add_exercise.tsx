@@ -11,9 +11,6 @@ interface Props {
     user: any
 }
 
-
-
-
 const Add_exercise = ({ user }: Props) => {
     const [message, setModalMessage] = useState('')
     const [successVisible, setSuccessVisible] = useState(false)
@@ -33,7 +30,6 @@ const Add_exercise = ({ user }: Props) => {
             end: end.toISOString()
         };
     };
-
 
     const handleAddExercise = async () => {
         const h = Number(hour)
@@ -174,6 +170,7 @@ const Add_exercise = ({ user }: Props) => {
                 <TextInput
                     style={Common_styles.input}
                     placeholder="輸入平均運動心率"
+                    placeholderTextColor="rgba(60, 130, 245, 0.3)"
                     value={heartRate}
                     onChangeText={setHeartRate}
                 />

@@ -129,17 +129,23 @@ const Add_food = ({ user }: Props) => {
         <View style={Common_styles.full_container}>
             <ScrollView style={Common_styles.scrollContainer}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 5 }}>
-                    <TextInput
-                        style={Common_styles.input}
-                        placeholder="輸入搜尋食物名稱"
-                        value={searchFoodName}
-                        onChangeText={setSearchFoodName}
-                    />
+                    <View style={[Common_styles.input,{flexDirection:'row',padding:0,alignItems:'center',height:40}]}>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" height={20} width={20} style={{ marginLeft: 5 }}>
+                            <path fill="#c2d9fc" d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
+                        </svg>
+                        <TextInput
+                            style={{width:'100%',height:'100%', paddingLeft:5}}
+                            placeholder="輸入搜尋食物名稱..."
+                            placeholderTextColor="rgba(60, 130, 245, 0.3)"
+                            value={searchFoodName}
+                            onChangeText={setSearchFoodName}
+                        />
+                    </View>
                 </View>
                 {filter_FoodData.length > 0 ? (
                     filter_FoodData.map((item, index) => (
                         <View key={index} style={Common_styles.nutritionBox}>
-                            <Text style={Common_styles.category}>{item.food_name}</Text>
+                            <Text style={[Common_styles.category, { color: '#4a7aba' }]}>{item.food_name}</Text>
                             <Text>{'蛋白質: ' + item.protein + 'g'}</Text>
                             <Text>{'脂肪: ' + item.fat + 'g'}</Text>
                             <Text>{'碳水化合物: ' + item.carbohydrates + 'g'}</Text>

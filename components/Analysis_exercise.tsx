@@ -203,7 +203,7 @@ const Analysis_exercise = ({ user }: Props) => {
                         backgroundGradientFrom: '#ffffff',
                         backgroundGradientTo: '#ffffff',
                         decimalPlaces: 1,
-                        color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`,
+                        color: (opacity = 1) => `rgba(4, 55, 242, ${opacity}`,
                         labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                         propsForBackgroundLines: {
                             stroke: '#a7a6a6',

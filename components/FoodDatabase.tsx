@@ -107,6 +107,7 @@ const FoodDatabase = ({ user }: Props) => {
                     <TextInput
                         style={Common_styles.input}
                         placeholder="輸入新增食物名稱"
+                        placeholderTextColor="rgba(60, 130, 245, 0.3)"
                         value={newFoodName}
                         onChangeText={setNewFoodName}
                     />
@@ -115,23 +116,26 @@ const FoodDatabase = ({ user }: Props) => {
                     <TextInput
                         style={[Common_styles.input, { flex: 2, marginRight: 5 }]}
                         placeholder="蛋白質"
+                        placeholderTextColor="rgba(60, 130, 245, 0.3)"
                         value={protein}
                         onChangeText={setProtein}
                     />
                     <TextInput
                         style={[Common_styles.input, { flex: 2, marginRight: 5 }]}
                         placeholder="碳水化合物"
+                        placeholderTextColor="rgba(60, 130, 245, 0.3)"
                         value={carbohydrates}
                         onChangeText={setCarbohydrates}
                     />
                     <TextInput
                         style={[Common_styles.input, { flex: 2, marginRight: 5 }]}
                         placeholder="脂肪"
+                        placeholderTextColor="rgba(60, 130, 245, 0.3)"
                         value={fat}
                         onChangeText={setFat}
                     />
                     <TouchableOpacity
-                        style={[Common_styles.submitBtn, { flex: 1 }]}
+                        style={[Common_styles.submitBtn, { flex: 1 ,height: 30,alignItems: 'center', justifyContent: 'center'}]}
                         onPress={handleAddFood}
                     >
                         <Text style={{ color: 'white', textAlign: 'center' }}>新增</Text>
@@ -140,11 +144,8 @@ const FoodDatabase = ({ user }: Props) => {
 
                 {result_FoodData.length > 0 ? (
                     result_FoodData.map((item, index) => (
-                        <View key={index} style={Common_styles.diaryItem}>
-                            <Text style={Common_styles.category}>
-                                {item.owner_name}
-                            </Text>
-                            <Text style={Common_styles.name}>{item.food_name}</Text>
+                        <View key={index} style={[Common_styles.nutritionBox, { marginBottom: 10 }]}>
+                            <Text style={Common_styles.category}>{item.food_name}</Text>
                             <Text style={Common_styles.details}>
                                 {'卡路里:' + item.calorie}
                             </Text>

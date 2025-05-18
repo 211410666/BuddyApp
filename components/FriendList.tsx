@@ -199,29 +199,29 @@ export default function FriendList({ user }: { user: any; }) {
   return (
     <View>
       {/* 新增好友區塊 */}
-      <View style={styles.addFriendContainer}>
+      <View style={Common_styles.addFriendContainer}>
         <TextInput
-          style={styles.input}
+          style={[Common_styles.input,{marginRight: 20,height:40}]}
           placeholder="以 email 新增好友"
-          placeholderTextColor="#888"
+          placeholderTextColor="rgba(60, 130, 245, 0.3)"
           value={newFriendEmail}
           onChangeText={setNewFriendEmail}
         />
-        <TouchableOpacity style={styles.addButton} onPress={handleAddFriend}>
-          <Text style={styles.addButtonText}>新增</Text>
+        <TouchableOpacity style={[Common_styles.submitBtn,{borderRadius:30}]} onPress={handleAddFriend}>
+          <Text style={Common_styles.addButtonText}>新增</Text>
         </TouchableOpacity>
       </View>
 
       {/* 好友列表 */}
-      <Text style={styles.title}>目前好友列表:</Text>
+      <Text style={Common_styles.FDTitle}>好友列表:</Text>
       <FlatList
         data={friends}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.friendItem}>
-            <Text style={styles.friendText}>{item.name}</Text>
-            <TouchableOpacity style={styles.delButton} onPress={() => handDelFriend(item.id)}>
-              <Text style={styles.delButtonText}>刪除好友</Text>
+          <View style={Common_styles.friendItem}>
+            <Text style={Common_styles.friendText}>{item.name}</Text>
+            <TouchableOpacity style={Common_styles.delButton} onPress={() => handDelFriend(item.id)}>
+              <Text style={Common_styles.delButtonText}>刪除</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -229,19 +229,19 @@ export default function FriendList({ user }: { user: any; }) {
       />
 
       {/* 待通過申請列表 */}
-      <Text style={styles.title}>待通過申請列表:</Text>
+      <Text style={Common_styles.FDTitle}>待通過申請列表:</Text>
       <FlatList
         data={pendingRequests}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.friendItem}>
-            <Text style={styles.friendText}>{item.name}</Text>
+          <View style={Common_styles.friendItem}>
+            <Text style={Common_styles.friendText}>{item.name}</Text>
             <View style={{ flexDirection: 'row' }}>
-              <TouchableOpacity style={styles.addButton} onPress={() => handleAcceptFriend(item.id)}>
-                <Text style={styles.addButtonText}>通過</Text>
+              <TouchableOpacity style={Common_styles.addButton} onPress={() => handleAcceptFriend(item.id)}>
+                <Text style={Common_styles.addButtonText}>通過</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.delButton} onPress={() => handDelFriend(item.id)}>
-                <Text style={styles.delButtonText}>拒絕</Text>
+              <TouchableOpacity style={Common_styles.delButton} onPress={() => handDelFriend(item.id)}>
+                <Text style={Common_styles.delButtonText}>拒絕</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -267,60 +267,3 @@ export default function FriendList({ user }: { user: any; }) {
   )
 }
 
-const styles = StyleSheet.create({
-  addFriendContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  input: {
-    flex: 1,
-    height: 40,
-    marginRight: 20,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    color: '#000',
-  },
-  addButton: {
-    backgroundColor: '#4caf50',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 28,
-    marginBottom: 8,
-  },
-  friendItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  friendText: {
-    fontSize: 16,
-    color: '#333',
-    flex: 1,
-  },
-  delButton: {
-    backgroundColor: '#d00d0d',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginLeft: 20,
-    borderRadius: 8,
-  },
-  delButtonText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-})
