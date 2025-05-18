@@ -1,6 +1,7 @@
 import React from 'react'
 import { Modal, View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-
+import { FontAwesome } from '@expo/vector-icons'
+import Common_styles from '../lib/common_styles'
 interface Props {
   visible: boolean
   message: string
@@ -15,12 +16,12 @@ const ErrorModal = ({ visible, message, onClose }: Props) => {
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <Text style={styles.title}>❌ 錯誤</Text>
-          <Text style={styles.message}>{message}</Text>
-          <TouchableOpacity style={styles.button} onPress={onClose}>
-            <Text style={styles.buttonText}>關閉</Text>
+      <View style={Common_styles.overlay}>
+        <View style={[Common_styles.modal,{ backgroundColor: '#fdecea' }]}>
+          <Text style={Common_styles.alertTitle}><FontAwesome name="times-circle" size={24} color="rgb(217,63,94)" /></Text>
+          <Text style={[Common_styles.alertMessage,{color:'#b71c1c'}]}>{message}</Text>
+          <TouchableOpacity style={[Common_styles.AlertButton,{backgroundColor: '#b71c1c'}]} onPress={onClose}>
+            <Text style={Common_styles.AlertButtonText}>關閉</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -30,40 +31,3 @@ const ErrorModal = ({ visible, message, onClose }: Props) => {
 
 export default ErrorModal
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modal: {
-    backgroundColor: '#fdecea',
-    padding: 24,
-    borderRadius: 10,
-    alignItems: 'center',
-    width: '80%',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#b71c1c',
-    marginBottom: 10,
-  },
-  message: {
-    fontSize: 16,
-    color: '#b71c1c',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#b71c1c',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-})

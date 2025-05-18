@@ -116,13 +116,41 @@ const Common_styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: "rgba(255, 255, 255, 0.3)",
-    
+
   },
   emptyText: {
     padding: 16,
     textAlign: "center",
     fontSize: 14,
     color: "#888",
+  },
+  //Daily專區
+  DSButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderRadius: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  DSDate: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  DSRightRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  count: {
+    fontSize: 14,
+    alignItems: "center",
+    color: "#555",
+  },
+  expand: {
+    fontSize: 14,
+    color: "#aaa",
   },
   //Calorie
   row: {
@@ -465,6 +493,66 @@ const Common_styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
   },
+  //LoadingModal專區
+  LDOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  LDModal: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    minWidth: 200,
+  },
+  LDText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#333',
+  },
+  LDTextImage: {
+    width: 100,
+    height: 40,
+    marginBottom: 5,
+  },
+  //SuccessModal專區
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modal: {
+    backgroundColor: '#ffffff',
+    padding: 24,
+    borderRadius: 10,
+    alignItems: 'center',
+    width: '80%',
+  },
+  alertTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  alertMessage: {
+    fontSize: 16,
+    color: '#4a7aba',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  AlertButton: {
+    backgroundColor: '#4a7aba',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 6,
+  },
+  AlertButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+
 });
 
 export default Common_styles;

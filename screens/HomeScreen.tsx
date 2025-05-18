@@ -7,16 +7,17 @@ import Diary from '../components/Diary'
 import Settings from '../components/Settings'
 import Common_styles from '../lib/common_styles'
 import Svg, { Path } from 'react-native-svg'
+import { FontAwesome } from '@expo/vector-icons'
+import { Colors } from 'react-native/Libraries/NewAppScreen'
+// const tabs = ['好友', '分析', '新增數據', '日記', '設定']
+const tabs = [
+  { name: '好友', icon: '好友' },
+  { name: '分析', icon: '分析' },
+  { name: '新增數據', icon: <FontAwesome name="plus" size={38} color='rgba(20,52,164,1)' /> }, //20 52 164
+  { name: '日記', icon: '日記' },
+  { name: '設定', icon: '設定'},
+]
 
-const tabs = ['好友', '分析', '新增數據', '日記', '設定']
-const AddIcon = () => (
-  <Svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width={24} height={24}>
-    <Path
-      fill="#4a7aba"
-      d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-320c0-35.3-28.7-64-64-64L64 32zM200 344l0-64-64 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l64 0 0-64c0-13.3 10.7-24 24-24s24 10.7 24 24l0 64 64 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-64 0 0 64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"
-    />
-  </Svg>
-)
 export default function HomeScreen({ route }: any) {
   const { user } = route.params
   const [activeTab, setActiveTab] = useState('好友')
@@ -44,23 +45,24 @@ export default function HomeScreen({ route }: any) {
       <View style={Common_styles.toolbar}>
         {tabs.map(tab => (
           <TouchableOpacity
-            key={tab}
+            key={tab.name}
             style={[
               Common_styles.tabButton,
-              activeTab === tab && Common_styles.activeTabButton,
+              activeTab === tab.name && Common_styles.activeTabButton,
             ]}
-            onPress={() => setActiveTab(tab)}
+            onPress={() => setActiveTab(tab.name)}
           >
             <Text
               style={[
                 Common_styles.tabText,
-                activeTab === tab && Common_styles.activeTabText,
+                activeTab === tab.name && Common_styles.activeTabText,
               ]}
             >
-              {tab}
+              {tab.icon}
             </Text>
           </TouchableOpacity>
         ))}
+
       </View>
     </View>
   )
