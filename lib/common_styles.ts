@@ -220,6 +220,11 @@ const Common_styles = StyleSheet.create({
     padding: 12,
     borderRadius: 30,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    position: "relative",
   },
   submitText: {
     color: "#fff",
@@ -552,7 +557,39 @@ const Common_styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+//Login專區
+  LoginSection:{
+    justifyContent: "space-between", // 垂直置中
+    alignItems: "center", // 水平置中
+    width: '70%',
+    borderWidth: 5,
+    borderRadius: 30,
+    height: 300,
+    borderColor: Colors.Text,
+    backgroundColor: Colors.light_2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    position: "relative",
 
+  },
+  LoginTop:{
+    width: '100%',
+    height: 50,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    backgroundColor: Colors.Text,
+    justifyContent: "center", // 垂直置中
+  },
+  background: {
+    flex: 1, 
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center', 
+    alignItems: 'center',
+    borderRadius: 30,
+  },
 });
 
 export default Common_styles;
