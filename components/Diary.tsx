@@ -6,7 +6,7 @@ import DiaryHeader from "./diaries/DiaryHeader";
 import { supabase } from "../lib/supabase";
 import { UsersTable } from "../lib/types";
 import { match } from "ts-pattern";
-
+import Common_styles from "../lib/common_styles";
 interface DiaryProps {
   user: Pick<UsersTable, "id">;
 }
@@ -206,7 +206,10 @@ export default function Diary({ user }: DiaryProps) {
   const [modalMessage, setModalMessage] = useState("");
 
   useEffect(() => {
-    getUserName(user.id).then(setUserName);
+    getUserName(user.id).then((name) => {
+      const cleanedName = name.replace("@gmail.com", ""); // 刪除特定字串
+      setUserName(cleanedName);
+    });
     getDiaryData(user.id).then(setDailyData);
     // setDailyData([
     //   {
@@ -304,7 +307,7 @@ export default function Diary({ user }: DiaryProps) {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={Common_styles.DYContainer}>
         <DiaryHeader userName={userName} />
 
         {dailyData.map((day) => (
@@ -326,11 +329,3 @@ export default function Diary({ user }: DiaryProps) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 64,
-    backgroundColor: "#fff",
-  },
-});
