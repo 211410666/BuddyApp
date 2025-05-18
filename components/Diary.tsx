@@ -13,7 +13,7 @@ interface DiaryProps {
 
 type EntryType = "food" | "exercise";
 
-interface EntryItem { 
+interface EntryItem {
   id: string;
   title: string;
   time: string;
@@ -111,6 +111,23 @@ async function fetchExerciseRecords(diaryIds: string[]) {
   return data;
 }
 
+async function fetchFoodData(foodsIds: string[]) {
+  console.log(foodsIds);
+  const { data, error } = await supabase
+    .from('foods')
+    .select('*')
+    .in('food_id', foodsIds)
+  if (error) {
+    console.error("[Exercise Records] Error: ", error);
+    return [];
+  }
+  if (!data || data.length === 0) {
+    console.error("[Exercise Records] Data is empty");
+    return [];
+  }
+  return data
+}
+
 async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
   const isValidUser = await supabase.from("users").select("*").eq("id", userId);
   if (!isValidUser) {
@@ -119,9 +136,10 @@ async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
   }
   const diaryList = await fetchDiaryEntries(userId);
   const diaryIds = diaryList.map((d) => d.diary_id);
-
   const foodRecords = await fetchFoodRecords(diaryIds);
+  const foodIds = foodRecords.map((d) => d.food_id);
   const exerciseRecords = await fetchExerciseRecords(diaryIds);
+  const foodDatas = await fetchFoodData(foodIds);
 
   const groupedByDate: Record<
     string,
@@ -152,12 +170,15 @@ async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
               return null;
             }
             console.log("✅ 找到對應 food record:", match);
+            const foodData = foodDatas.find((f) => f.food_id === match.food_id);
+            const calories = foodData ? foodData.calorie : 0;
+            console.log('calories',calories)
             return {
               id: match.diarys_id,
               title: `食物 #${match.food_id}`,
               time: extractTime(match.create_time),
               type: "food" as const,
-              calories: 0,
+              calories: calories,
             };
           })
           .with("exercise", () => {
@@ -189,13 +210,13 @@ async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
 
       return {
         date,
-        foodCount: items.filter((i) => i.type === "food").length,
-        exerciseCount: items.filter((i) => i.type === "exercise").length,
+        foodCount: items.filter((i) => i.state.value.type === "food").length,
+        exerciseCount: items.filter((i) => i.state.value.type === "exercise").length,
         items,
       };
     },
   );
-  console.log('final Data',finalData);
+  console.log('final Data', finalData);
   return finalData;
 }
 
@@ -292,11 +313,6 @@ export default function Diary({ user }: DiaryProps) {
   useEffect(() => {
     console.log("✅ dailyData 更新：", dailyData);
   }, [dailyData]);
-
-  const showMessage = (msg: string) => {
-    setModalMessage(msg);
-    setIsMessageModalVisible(true);
-  };
 
   const closeMessageModal = () => {
     setIsMessageModalVisible(false);

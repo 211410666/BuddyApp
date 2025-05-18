@@ -47,6 +47,7 @@ export default function DailyCalorieSection({
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded((prev) => !prev);
   };
+  console.log('item',items);
 
   return (
     <View style={styles.section}>
@@ -66,11 +67,11 @@ export default function DailyCalorieSection({
           ) : (
             items.map((entry) => (
               <CalorieEntryItem
-                key={entry.id}
-                time={entry.time}
-                title={entry.title}
-                type={entry.type}
-                calories={entry.calories}
+                key={entry.state.value.id}
+                time={entry.state.value.time}
+                title={entry.state.value.title}
+                type={entry.state.value.type}
+                calories={entry.state.value.calories}
               />
             ))
           )}
