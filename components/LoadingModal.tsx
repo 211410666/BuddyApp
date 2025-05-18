@@ -1,6 +1,6 @@
 import React from 'react'
-import { Modal, View, Text, ActivityIndicator, StyleSheet } from 'react-native'
-
+import { Modal, View, Text, ActivityIndicator, StyleSheet,Image} from 'react-native'
+import Common_styles from '../lib/common_styles'
 interface LoadingModalProps {
   visible: boolean
 }
@@ -8,10 +8,15 @@ interface LoadingModalProps {
 const LoadingModal = ({ visible }: LoadingModalProps) => {
   return (
     <Modal transparent animationType="fade" visible={visible}>
-      <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <ActivityIndicator size="large" color="#4CAF50" />
-          <Text style={styles.text}>資料庫讀取中...</Text>
+      <View style={Common_styles.LDOverlay}>
+        <View style={Common_styles.LDModal}>
+          <Image
+            source={require('../assets/LoadingIcon.jpg')}
+            style={Common_styles.LDTextImage}
+            resizeMode="contain"
+          />
+          <ActivityIndicator size="large" color="#4a7aba" />
+          <Text style={Common_styles.LDText}>資料庫讀取中...</Text>
         </View>
       </View>
     </Modal>
@@ -20,23 +25,4 @@ const LoadingModal = ({ visible }: LoadingModalProps) => {
 
 export default LoadingModal
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modal: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    minWidth: 200,
-  },
-  text: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#333',
-  },
-})
+
