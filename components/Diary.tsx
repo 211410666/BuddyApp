@@ -4,7 +4,7 @@ import CustomModal from "./CustomModal";
 import DailyCalorieSection from "./diaries/DailyCalorieSection";
 import DiaryHeader from "./diaries/DiaryHeader";
 import { supabase } from "../lib/supabase";
-import { UsersTable } from "../lib/types";
+import { Integer4, UsersTable } from "../lib/types";
 import { match } from "ts-pattern";
 import Common_styles from "../lib/common_styles";
 interface DiaryProps {
@@ -43,7 +43,6 @@ async function getUserName(userId: string): Promise<string> {
     console.error("[User Name] Can not fetch user name");
     return "";
   }
-  // console.log("[User Name]: ", data.name);
   return data.name ?? "";
 }
 
@@ -60,7 +59,7 @@ function extractTime(timestamp: string): string {
 }
 
 async function fetchDiaryEntries(userId: string) {
-  console.log("[Diary Entries] 傳入的 userId 是：", userId);
+
   const { data, error } = await supabase
     .from("diarys")
     .select("*")
@@ -140,6 +139,7 @@ async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
   const foodIds = foodRecords.map((d) => d.food_id);
   const exerciseRecords = await fetchExerciseRecords(diaryIds);
   const foodDatas = await fetchFoodData(foodIds);
+  const userData = await fetchUserData(userId);
 
   const groupedByDate: Record<
     string,
@@ -161,18 +161,14 @@ async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
       for (const diary of entries) {
         const result = match(diary.category)
           .with("food", () => {
-            console.log("📌 處理 food category:", diary);
             const match = foodRecords.find(
               (f) => f.diarys_id === diary.diary_id,
             );
             if (!match) {
-              console.log("❌ 沒有找到對應的 food record");
               return null;
             }
-            console.log("✅ 找到對應 food record:", match);
             const foodData = foodDatas.find((f) => f.food_id === match.food_id);
             const calories = foodData ? foodData.calorie : 0;
-            console.log('calories',calories)
             return {
               id: match.diarys_id,
               title: `食物 #${match.food_id}`,
@@ -182,17 +178,25 @@ async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
             };
           })
           .with("exercise", () => {
-            console.log("📌 處理 exercise category:", diary);
             const match = exerciseRecords.find(
               (e) => e.diarys_id === diary.diary_id,
             );
             if (!match) {
-              console.log("❌ 沒有找到對應的 exercise record");
               return null;
             }
-            console.log("✅ 找到對應 exercise record:", match);
-            const intensity = match.avg_heartrate > 140 ? 8 : 4;
-            const calories = match.duration * intensity;
+            const heartRate = match.avg_heartrate;
+            const durationInHours = match.duration / 3600;
+            const weight = userData.weight ?? 60; // 預設60公斤，防呆
+            let MET = 3.5;
+
+            if (heartRate >= 140) MET = 8.0;
+            else if (heartRate >= 120) MET = 6.0;
+            else if (heartRate >= 100) MET = 4.5;
+            else MET = 2.5;
+            
+            const calories = (MET * weight * durationInHours).toFixed(1);
+            console.log('calorie',calories)
+        
             return {
               id: match.diarys_id,
               title: "運動",
@@ -203,7 +207,6 @@ async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
           });
 
         if (result) {
-          console.log("➡️ 推入項目:", result);
           items.push(result);
         }
       }
@@ -216,8 +219,20 @@ async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
       };
     },
   );
-  console.log('final Data', finalData);
   return finalData;
+}
+
+async function fetchUserData(userId: string) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single()
+  if (error) {
+    console.log('loading error')
+    return;
+  }
+  return data;
 }
 
 export default function Diary({ user }: DiaryProps) {
@@ -226,91 +241,15 @@ export default function Diary({ user }: DiaryProps) {
   const [isMessageModalVisible, setIsMessageModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
 
+
+
   useEffect(() => {
     getUserName(user.id).then((name) => {
       const cleanedName = name.replace("@gmail.com", ""); // 刪除特定字串
       setUserName(cleanedName);
     });
     getDiaryData(user.id).then(setDailyData);
-    // setDailyData([
-    //   {
-    //     date: "2025-05-15",
-    //     foodCount: 2,
-    //     exerciseCount: 1,
-    //     items: [
-    //       {
-    //         id: "f1",
-    //         title: "白飯",
-    //         time: "08:00",
-    //         type: "food",
-    //         calories: 300,
-    //       },
-    //       {
-    //         id: "f2",
-    //         title: "便當",
-    //         time: "12:00",
-    //         type: "food",
-    //         calories: 650,
-    //       },
-    //       {
-    //         id: "e1",
-    //         title: "跑步",
-    //         time: "18:00",
-    //         type: "exercise",
-    //         calories: 450,
-    //       },
-    //     ],
-    //   },
-    //   {
-    //     date: "2025-05-14",
-    //     foodCount: 1,
-    //     exerciseCount: 2,
-    //     items: [
-    //       {
-    //         id: "e2",
-    //         title: "游泳",
-    //         time: "07:30",
-    //         type: "exercise",
-    //         calories: 600,
-    //       },
-    //       {
-    //         id: "f3",
-    //         title: "饅頭",
-    //         time: "09:00",
-    //         type: "food",
-    //         calories: 220,
-    //       },
-    //       {
-    //         id: "e3",
-    //         title: "跳繩",
-    //         time: "21:00",
-    //         type: "exercise",
-    //         calories: 300,
-    //       },
-    //     ],
-    //   },
-    //   {
-    //     date: "2025-05-13",
-    //     foodCount: 1,
-    //     exerciseCount: 1,
-    //     items: [
-    //       {
-    //         id: "f4",
-    //         title: "麵包",
-    //         time: "10:00",
-    //         type: "food",
-    //         calories: 280,
-    //       },
-    //       {
-    //         id: "e4",
-    //         title: "重訓",
-    //         time: "17:00",
-    //         type: "exercise",
-    //         calories: 500,
-    //       },
-    //     ],
-    //   },
-    // ]);
+
   }, [user.id]);
 
   useEffect(() => {
@@ -320,6 +259,7 @@ export default function Diary({ user }: DiaryProps) {
   const closeMessageModal = () => {
     setIsMessageModalVisible(false);
   };
+
 
   return (
     <SafeAreaView style={{ flex: 1 }}>

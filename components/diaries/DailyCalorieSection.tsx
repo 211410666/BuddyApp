@@ -10,6 +10,8 @@ import {
 import DailySummaryButton from "./DailySummaryButton";
 import CalorieEntryItem from "./CalorieEntryItem";
 import Common_styles from "../../lib/common_styles";
+import { Integer4 } from "../../lib/types";
+import { Float } from "react-native/Libraries/Types/CodegenTypes";
 type EntryType = "food" | "exercise";
 
 type EntryItem = {
@@ -47,8 +49,6 @@ export default function DailyCalorieSection({
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpanded((prev) => !prev);
   };
-  console.log('item',items);
-
   return (
     <View style={Common_styles.section}>
       <DailySummaryButton

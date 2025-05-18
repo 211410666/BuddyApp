@@ -20,6 +20,25 @@ const Analysis_exercise = ({ user }: Props) => {
     const [loading, setLoading] = useState(false)
     const [exerciseData, setExerciseData] = useState<any[]>([])
     const [thisMonthExerciseData, setThisMonthExerciseData] = useState<any[]>([])
+    const [userData, setUserData] = useState<any[]>([])
+
+
+    async function fetchFoodData(foodsIds: string[]) {
+        console.log(foodsIds);
+        const { data, error } = await supabase
+            .from('foods')
+            .select('*')
+            .in('food_id', foodsIds)
+        if (error) {
+            console.error("[Exercise Records] Error: ", error);
+            return [];
+        }
+        if (!data || data.length === 0) {
+            console.error("[Exercise Records] Data is empty");
+            return [];
+        }
+        setUserData(data);
+    }
 
     const fetchExerciseData = async () => {
         setLoading(true)
@@ -54,7 +73,7 @@ const Analysis_exercise = ({ user }: Props) => {
             setErrorVisible(true)
             return
         }
-        if(exercisedata.length===0){
+        if (exercisedata.length === 0) {
             setLoading(false)
             setModalMessage('還沒有任何紀錄喔~趕快去運動吧~')
             setSuccessVisible(true)
@@ -77,6 +96,7 @@ const Analysis_exercise = ({ user }: Props) => {
 
     useEffect(() => {
         fetchExerciseData()
+        fetchFoodData(user.id)
     }, [])
 
     const getHoursFromDuration = (data: any[]) => {
@@ -143,7 +163,7 @@ const Analysis_exercise = ({ user }: Props) => {
     const avgHeartrate = thisMonthExerciseData.length > 0 ? totalHeartrate / thisMonthExerciseData.length : 0
 
     // Zone 2 心率區間
-    const maxHeartRate = 220 - (user.age || 30) // 如果沒有年齡預設30歲
+    const maxHeartRate = 220 - (userData.age || 30) // 如果沒有年齡預設30歲
     const zone2Lower = maxHeartRate * 0.6
     const zone2Upper = maxHeartRate * 0.7
     const fatCaloriesBurned = avgDurationMinutes * 0.12 * avgHeartrate
