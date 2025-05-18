@@ -70,34 +70,14 @@ export default function EditableAvatar({ uri, onChange }: EditableAvatarProps) {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
   avatar: {
-    width: 128,
-    height: 128,
+    width: 80,
+    height: 80,
     borderRadius: 9999,
     backgroundColor: "#ccc",
   },
   info: {
     marginLeft: 12,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  email: {
-    fontSize: 14,
-    color: "#666",
   },
   backdrop: {
     flex: 1,
@@ -109,7 +89,7 @@ const styles = StyleSheet.create({
     width: "80%",
     backgroundColor: "#fff",
     borderRadius: 12,
-    padding: 20,
+    padding: 10,
   },
   label: {
     fontSize: 16,
@@ -128,10 +108,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   button: {
-    backgroundColor: "#1e90ff",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    backgroundColor: '#4a7aba',
+    padding: 12,
+    borderRadius: 30,
+    alignItems: "center",
   },
   buttonText: {
     color: "#fff",

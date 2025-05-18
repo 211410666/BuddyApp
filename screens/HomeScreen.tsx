@@ -13,7 +13,7 @@ import { Colors } from 'react-native/Libraries/NewAppScreen'
 const tabs = [
   { name: '好友', icon: '好友' },
   { name: '分析', icon: '分析' },
-  { name: '新增數據', icon: <FontAwesome name="plus" size={38} color='rgba(20,52,164,1)' /> }, //20 52 164
+  { name: '新增數據', icon: <FontAwesome name="plus-circle" size={38} color="rgba(20,52,164,1)" /> }, //<FontAwesome name="plus" size={38} color='rgba(20,52,164,1)' />
   { name: '日記', icon: '日記' },
   { name: '設定', icon: '設定'},
 ]
