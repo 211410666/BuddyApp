@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   View,
-  StyleSheet,
   LayoutAnimation,
   Platform,
   UIManager,
@@ -10,8 +9,6 @@ import {
 import DailySummaryButton from "./DailySummaryButton";
 import CalorieEntryItem from "./CalorieEntryItem";
 import Common_styles from "../../lib/common_styles";
-import { Integer4 } from "../../lib/types";
-import { Float } from "react-native/Libraries/Types/CodegenTypes";
 type EntryType = "food" | "exercise";
 
 type EntryItem = {
@@ -65,16 +62,45 @@ export default function DailyCalorieSection({
           {items.length === 0 ? (
             <Text style={Common_styles.emptyText}>這天沒有紀錄喔！</Text>
           ) : (
-            items.map((entry) => (
-              <CalorieEntryItem
-                key={entry.state.value.id}
-                time={entry.state.value.time}
-                title={entry.state.value.title}
-                type={entry.state.value.type}
-                calories={entry.state.value.calories}
-              />
-            ))
+            items.map((entry, index) => {
+              console.log("entry", index, entry);
+
+              // 取時間時分，例如 "2025-05-18T15:30:00" 取成 "15:30"
+              const time =
+                entry.data?.create_time
+                  ? new Date(entry.data.create_time).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                  : "";
+
+              if (entry.type === "food") {
+                return (
+                  <CalorieEntryItem
+                    key={entry.data.id}
+                    time={time}
+                    title={entry.data.food_info.food_name}
+                    type={entry.type}
+                    calories={entry.data.food_info.calorie}
+                  />
+                );
+              } else if (entry.type === "exercise") {
+                return (
+                  <CalorieEntryItem
+                    key={entry.data.id}
+                    time={time}
+                    title="運動"
+                    type={entry.type}
+                    calories={entry.data.calories}
+                  />
+                );
+              } else {
+                // 萬一有其它 type，避免錯誤
+                return null;
+              }
+            })
           )}
+
           <View style={Common_styles.divider} />
         </View>
       )}

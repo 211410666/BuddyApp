@@ -1,287 +1,235 @@
 import React, { useEffect, useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet } from "react-native";
+import { SafeAreaView, ScrollView } from "react-native";
 import CustomModal from "./CustomModal";
 import DailyCalorieSection from "./diaries/DailyCalorieSection";
 import DiaryHeader from "./diaries/DiaryHeader";
 import { supabase } from "../lib/supabase";
-import { Integer4, UsersTable } from "../lib/types";
-import { match } from "ts-pattern";
 import Common_styles from "../lib/common_styles";
-interface DiaryProps {
-  user: Pick<UsersTable, "id">;
+import { format } from 'date-fns';
+import SuccessModal from "./SuccesModal";
+import ErrorModal from "./ErrorModal";
+import LoadingModal from "./LoadingModal";
+
+interface Props {
+  user: any
 }
 
-type EntryType = "food" | "exercise";
+type CombinedEntry = {
+  type: 'food' | 'exercise';
+  create_time: string;
+  data: any; // 可根據實際型別調整
+};
 
-interface EntryItem {
-  id: string;
-  title: string;
-  time: string;
-  type: EntryType;
-  calories: number;
+type GroupedByDate = Record<string, CombinedEntry[]>;
+
+function formatDate(dateStr: string) {
+  return format(new Date(dateStr), 'yyyy-MM-dd');
 }
 
-interface DailyGroupData {
-  date: string;
-  foodCount: number;
-  exerciseCount: number;
-  items: EntryItem[];
-}
+function groupByDate(
+  foods: any[], // mergedFoodDetails
+  exercises: any[] // exerciseDetails
+): GroupedByDate {
+  const grouped: GroupedByDate = {};
 
-async function getUserName(userId: string): Promise<string> {
-  const { data, error } = await supabase
-    .from("users")
-    .select("name")
-    .eq("id", userId)
-    .single();
-
-  if (error) {
-    console.error("取得使用者名稱失敗:", error);
-    return "";
-  }
-  if (!data) {
-    console.error("[User Name] Can not fetch user name");
-    return "";
-  }
-  return data.name ?? "";
-}
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toISOString().split("T")[0];
-}
-
-function extractTime(timestamp: string): string {
-  return new Date(timestamp).toLocaleTimeString("zh-TW", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-}
-
-async function fetchDiaryEntries(userId: string) {
-
-  const { data, error } = await supabase
-    .from("diarys")
-    .select("*")
-    .eq("owner", userId)
-    .order("create_time", { ascending: false });
-  if (error) {
-    console.error(`[Fetch Diaries] error: ${error}`);
-    return [];
-  }
-  if (!data || data.length === 0) {
-    console.error("[Fetch Diaries] Data is empty");
-    return [];
-  }
-  return data;
-}
-
-async function fetchFoodRecords(diaryIds: string[]) {
-  const { data, error } = await supabase
-    .from("diary_food")
-    .select("diarys_id, food_id, create_time")
-    .in("diarys_id", diaryIds);
-  if (error) {
-    console.error("[Food Records] Error: ", error);
-    return [];
-  }
-  if (!data || data.length === 0) {
-    console.error("[Food Records] Data is empty");
-    return [];
-  }
-  console.log("🥬 foodRecords:", data);
-  return data;
-}
-
-async function fetchExerciseRecords(diaryIds: string[]) {
-  const { data, error } = await supabase
-    .from("diary_exercise")
-    .select("diarys_id, avg_heartrate, duration, create_time")
-    .in("diarys_id", diaryIds);
-  if (error) {
-    console.error("[Exercise Records] Error: ", error);
-    return [];
-  }
-  if (!data || data.length === 0) {
-    console.error("[Exercise Records] Data is empty");
-    return [];
-  }
-  console.log("🏃‍♂️ exerciseRecords:", data);
-  return data;
-}
-
-async function fetchFoodData(foodsIds: string[]) {
-  console.log(foodsIds);
-  const { data, error } = await supabase
-    .from('foods')
-    .select('*')
-    .in('food_id', foodsIds)
-  if (error) {
-    console.error("[Exercise Records] Error: ", error);
-    return [];
-  }
-  if (!data || data.length === 0) {
-    console.error("[Exercise Records] Data is empty");
-    return [];
-  }
-  return data
-}
-
-async function getDiaryData(userId: string): Promise<DailyGroupData[]> {
-  const isValidUser = await supabase.from("users").select("*").eq("id", userId);
-  if (!isValidUser) {
-    console.error("[Diary Data] Not Valid User");
-    return [];
-  }
-  const diaryList = await fetchDiaryEntries(userId);
-  const diaryIds = diaryList.map((d) => d.diary_id);
-  const foodRecords = await fetchFoodRecords(diaryIds);
-  const foodIds = foodRecords.map((d) => d.food_id);
-  const exerciseRecords = await fetchExerciseRecords(diaryIds);
-  const foodDatas = await fetchFoodData(foodIds);
-  const userData = await fetchUserData(userId);
-
-  const groupedByDate: Record<
-    string,
-    { diary_id: string; category: string }[]
-  > = {};
-  for (const diary of diaryList) {
-    const date = formatDate(diary.create_time);
-    if (!groupedByDate[date]) groupedByDate[date] = [];
-    groupedByDate[date].push({
-      diary_id: diary.diary_id,
-      category: diary.category,
+  // 處理食物資料
+  for (const food of foods) {
+    const date = formatDate(food.create_time);
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push({
+      type: 'food',
+      create_time: food.create_time,
+      data: food,
     });
   }
 
-  const finalData: DailyGroupData[] = Object.entries(groupedByDate).map(
-    ([date, entries]) => {
-      const items: EntryItem[] = [];
-
-      for (const diary of entries) {
-        const result = match(diary.category)
-          .with("food", () => {
-            const match = foodRecords.find(
-              (f) => f.diarys_id === diary.diary_id,
-            );
-            if (!match) {
-              return null;
-            }
-            const foodData = foodDatas.find((f) => f.food_id === match.food_id);
-            const calories = foodData ? foodData.calorie : 0;
-            return {
-              id: match.diarys_id,
-              title: `食物 #${match.food_id}`,
-              time: extractTime(match.create_time),
-              type: "food" as const,
-              calories: calories,
-            };
-          })
-          .with("exercise", () => {
-            const match = exerciseRecords.find(
-              (e) => e.diarys_id === diary.diary_id,
-            );
-            if (!match) {
-              return null;
-            }
-            const heartRate = match.avg_heartrate;
-            const durationInHours = match.duration / 3600;
-            const weight = userData.weight ?? 60; // 預設60公斤，防呆
-            let MET = 3.5;
-
-            if (heartRate >= 140) MET = 8.0;
-            else if (heartRate >= 120) MET = 6.0;
-            else if (heartRate >= 100) MET = 4.5;
-            else MET = 2.5;
-            
-            const calories = (MET * weight * durationInHours).toFixed(1);
-            console.log('calorie',calories)
-        
-            return {
-              id: match.diarys_id,
-              title: "運動",
-              time: extractTime(match.create_time),
-              type: "exercise" as const,
-              calories,
-            };
-          });
-
-        if (result) {
-          items.push(result);
-        }
-      }
-
-      return {
-        date,
-        foodCount: items.filter((i) => i.state.value.type === "food").length,
-        exerciseCount: items.filter((i) => i.state.value.type === "exercise").length,
-        items,
-      };
-    },
-  );
-  return finalData;
-}
-
-async function fetchUserData(userId: string) {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single()
-  if (error) {
-    console.log('loading error')
-    return;
-  }
-  return data;
-}
-
-export default function Diary({ user }: DiaryProps) {
-  const [userName, setUserName] = useState("");
-  const [dailyData, setDailyData] = useState<DailyGroupData[]>([]);
-  const [isMessageModalVisible, setIsMessageModalVisible] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
-
-
-
-  useEffect(() => {
-    getUserName(user.id).then((name) => {
-      const cleanedName = name.replace("@gmail.com", ""); // 刪除特定字串
-      setUserName(cleanedName);
+  // 處理運動資料
+  for (const ex of exercises) {
+    const date = formatDate(ex.create_time);
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push({
+      type: 'exercise',
+      create_time: ex.create_time,
+      data: ex,
     });
-    getDiaryData(user.id).then(setDailyData);
+  }
 
-  }, [user.id]);
+  return grouped;
+}
 
-  useEffect(() => {
-    console.log("✅ dailyData 更新：", dailyData);
-  }, [dailyData]);
 
-  const closeMessageModal = () => {
-    setIsMessageModalVisible(false);
+const Diary = ({ user }: Props) => {
+  const [message, setModalMessage] = useState('')
+  const [successVisible, setSuccessVisible] = useState(false)
+  const [errorVisible, setErrorVisible] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [dailyData, setDailyData] = useState<any[]>([])
+  const [userData, setUserData] = useState<any[]>([])
+
+  const calculateCalories = ({
+    weightKg,
+    age,
+    sex, // 1=男，2=女
+    durationSec,
+    heartRate,
+  }: {
+    weightKg: number;
+    age: number;
+    sex: number;
+    durationSec: number;
+    heartRate: number;
+  }) => {
+    const durationMin = durationSec / 60;
+    let calories = 0;
+    console.log('sex', sex)
+    if (sex === 1 || sex === 1) {
+      // 男性
+      calories =
+        ((-55.0969 + 0.6309 * heartRate + 0.1988 * weightKg + 0.2017 * age) *
+          durationMin) /
+        4.184;
+      console.log('heartRate', heartRate)
+    } else {
+      // 女性
+      calories =
+        ((-20.4022 + 0.4472 * heartRate - 0.1263 * weightKg + 0.074 * age) *
+          durationMin) /
+        4.184;
+    }
+
+    return Math.max(Math.round(calories), 0); // 不要負數
   };
 
+  const fetchDiarysData = async () => {
+    setLoading(true)
+    const { data: sport, error: sportError } = await supabase
+      .from('diarys')
+      .select('*')
+      .eq('owner', user.id)
+      .eq('category', 'exercise')
+    const { data: food, error: foodError } = await supabase
+      .from('diarys')
+      .select('*')
+      .eq('owner', user.id)
+      .eq('category', 'food')
+    if (sportError || foodError) {
+      setModalMessage('讀取 diarys 時發生錯誤')
+      setErrorVisible(true)
+      setLoading(false)
+      return
+    }
+    const sportDiaryIds = (sport || []).map(item => item.diary_id)
+    const foodDiaryIds = (food || []).map(item => item.diary_id)
+
+    const { data: exerciseDetails, error: exerciseError } = await supabase
+      .from('diary_exercise')
+      .select('*')
+      .in('diarys_id', sportDiaryIds)
+    const { data: foodDetails, error: foodErrorDetail } = await supabase
+      .from('diary_food')
+      .select('*')
+      .in('diarys_id', foodDiaryIds)
+    if (exerciseError || foodErrorDetail) {
+      setModalMessage('讀取詳細資料時發生錯誤')
+      setErrorVisible(true)
+      setLoading(false)
+      return
+    }
+    const foodIds = (foodDetails || [])
+      .map(item => item.food_id)
+      .filter((id, index, self) => id && self.indexOf(id) === index) // 去除重複與空值
+    const { data: foodInfoList, error: foodInfoError } = await supabase
+      .from('foods')
+      .select('*')
+      .in('food_id', foodIds)
+    if (foodInfoError) {
+      setModalMessage('讀取食物詳細資料時發生錯誤')
+      setErrorVisible(true)
+      setLoading(false)
+      return
+    }
+    const mergedFoodDetails = foodDetails.map(item => {
+      const foodInfo = foodInfoList.find(f => f.food_id === item.food_id)
+      return {
+        ...item,
+        food_info: foodInfo || null,
+      }
+    })
+    const { data: udata, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+    const { weight, age, sex } = udata
+    if (error) { return }
+    const exerciseWithCalories = exerciseDetails.map((item) => {
+      const calories = calculateCalories({
+        weightKg: weight,
+        age,
+        sex,
+        durationSec: item.duration,
+        heartRate: item.avg_heartrate,
+      });
+
+      return {
+        ...item,
+        calories,
+      };
+    });
+
+    const groupedData = groupByDate(mergedFoodDetails, exerciseWithCalories);
+    console.log('Grouped by date:', groupedData);
+    setDailyData(groupedData);
+    setLoading(false);
+  }
+  useEffect(() => {
+    fetchDiarysData();
+  }, [])
+
+  useEffect(() => {
+    console.log('Daily Data', dailyData);
+
+  }, [dailyData])
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={Common_styles.DYContainer}>
-        <DiaryHeader userName={userName} />
+        <DiaryHeader userName={user.name} />
 
-        {dailyData.map((day) => (
-          <DailyCalorieSection
-            key={day.date}
-            date={day.date}
-            foodCount={day.foodCount}
-            exerciseCount={day.exerciseCount}
-            items={day.items}
-          />
-        ))}
-
-        <CustomModal
-          visible={isMessageModalVisible}
-          message={modalMessage}
-          onClose={closeMessageModal}
+        {Object.entries(dailyData)
+          .sort(([dateA], [dateB]) => {
+            // 把日期字串轉成 Date，比較大小
+            return new Date(dateB).getTime() - new Date(dateA).getTime(); // 最新日期在前
+            // 如果要最舊日期在前，改成：new Date(dateA).getTime() - new Date(dateB).getTime()
+          })
+          .map(([date, items]) => {
+            const foodCount = items.filter(i => i.type === 'food').length;
+            const exerciseCount = items.filter(i => i.type === 'exercise').length;
+            return (
+              <DailyCalorieSection
+                key={date}
+                date={date}
+                foodCount={foodCount}
+                exerciseCount={exerciseCount}
+                items={items}
+              />
+            );
+          })}
+        <SuccessModal
+          visible={successVisible}
+          message={message}
+          onClose={() => setSuccessVisible(false)}
         />
+        <ErrorModal
+          visible={errorVisible}
+          message={message}
+          onClose={() => setErrorVisible(false)}
+        />
+        <LoadingModal visible={loading} />
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
+
+
+export default Diary
