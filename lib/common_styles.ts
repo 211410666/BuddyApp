@@ -562,25 +562,21 @@ const Common_styles = StyleSheet.create({
     justifyContent: "space-between", // 垂直置中
     alignItems: "center", // 水平置中
     width: '70%',
-    borderWidth: 5,
-    borderRadius: 30,
-    height: 300,
-    borderColor: Colors.Text,
+    height: 400,
     backgroundColor: Colors.light_2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    position: "relative",
-
+    // borderRadius: 20,
+    // shadowColor: "#000",
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.2,
+    // shadowRadius: 5,
+    // position: "relative",
+    paddingVertical: 70,
   },
-  LoginTop:{
-    width: '100%',
-    height: 50,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-    backgroundColor: Colors.Text,
+  iconContainer:{
+    width: 20,
+    height: 20,
     justifyContent: "center", // 垂直置中
+    alignItems: "center", // 水平置中
   },
   background: {
     flex: 1, 
@@ -590,6 +586,11 @@ const Common_styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 30,
   },
+  logo:{
+    width: '100%',
+    height: 100,
+    borderBottomWidth: 1.5,
+  }
 });
 
 export default Common_styles;
