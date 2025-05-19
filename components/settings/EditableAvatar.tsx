@@ -71,8 +71,8 @@ export default function EditableAvatar({ uri, onChange }: EditableAvatarProps) {
 
 const styles = StyleSheet.create({
   avatar: {
-    width: 80,
-    height: 80,
+    width: 120,
+    height: 120,
     borderRadius: 9999,
     backgroundColor: "#ccc",
   },
