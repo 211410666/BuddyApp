@@ -220,7 +220,6 @@ const style = StyleSheet.create({
     position: "relative",
   },
   avatarContainer: {
-    backgroundColor: "blue",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 65,
