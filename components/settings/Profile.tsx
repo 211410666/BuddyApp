@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -13,8 +13,9 @@ import {
 import EditableAvatar from "./EditableAvatar";
 import { supabase } from "../../lib/supabase";
 import { Picker } from "@react-native-picker/picker";
-import { FontAwesome } from '@expo/vector-icons'
+import { FontAwesome } from "@expo/vector-icons";
 import Common_styles from "../../lib/common_styles";
+import Toast from "react-native-toast-message";
 //
 type Props = {
   value: string;
@@ -26,7 +27,6 @@ type Props = {
     container?: ViewStyle;
   };
 };
-
 
 //
 const { height: WINDOWS_HEIGHT, width: WINDOWS_WIDTH } =
@@ -46,6 +46,13 @@ const Profile = ({ user }: { user: any }) => {
     email: "",
     sex: 0,
   });
+  const [userProfilePrev, setUserProfilePrev] = useState<ProfileData>({
+    avatarUri: "",
+    name: "",
+    email: "",
+    sex: 0,
+  });
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   function EditableText({ value, onChange, propStyles }: Props) {
     const [isEditing, setIsEditing] = useState(false);
@@ -56,7 +63,7 @@ const Profile = ({ user }: { user: any }) => {
         onChange(draft); // 儲存變更
         Keyboard.dismiss();
       }
-      handleSaveProfile()
+      handleSaveProfile();
       setIsEditing((prev) => !prev);
     };
 
@@ -75,77 +82,89 @@ const Profile = ({ user }: { user: any }) => {
           <Text style={[style.text, propStyles?.text]}>{value}</Text>
         )}
         <Pressable onPress={toggleEdit} style={[style.icon, propStyles?.btn]}>
-          <FontAwesome name={isEditing ? "check" : "pencil"} size={14} color="#4670b9" />
+          <FontAwesome
+            name={isEditing ? "check" : "pencil"}
+            size={14}
+            color="#4670b9"
+          />
         </Pressable>
       </View>
     );
   }
 
   const handleSaveProfile = async () => {
-    const { error: updateNameError } = await supabase
-      .from("users")
-      .update({
-        name: userProfile.name,
-      })
-      .eq("id", user.id);
-    const { error: updateEmailError } = await supabase
+    const { error: updateError } = await supabase
       .from("users")
       .update({
         email: userProfile.email,
-      })
-      .eq("id", user.id);
-    const { error: updateAvatarError } = await supabase
-      .from("users")
-      .update({
+        name: userProfile.name,
         avatar_uri: userProfile.avatarUri,
-      })
-      .eq("id", user.id);
-    const { error: updateGenderError } = await supabase
-      .from("users")
-      .update({
         sex: userProfile.sex,
       })
       .eq("id", user.id);
-    if (updateNameError) {
-      console.error("[Update Profile] Failed:", updateNameError);
-    }
-    if (updateEmailError) {
-      console.error("[Update Profile] Failed:", updateEmailError);
-    }
-    if (updateAvatarError) {
-      console.error("[Update Profile] Failed:", updateAvatarError);
-    }
-    if (updateGenderError) {
-      console.error("[Update Profile] Failed:", updateAvatarError);
+    if (updateError) {
+      console.error("[Update Profile] Failed:", updateError);
     }
     console.log("[Profile Update] Success");
   };
+  const fetchUserProfile = async () => {
+    const { data: userProfile, error: fetchProfileError } = await supabase
+      .from("users")
+      .select("email, name, avatar_uri, sex")
+      .eq("id", user.id)
+      .single();
+    if (fetchProfileError) {
+      console.error("[User Profile] ", fetchProfileError);
+      Toast.show({
+        type: "error",
+        text1: "Search User",
+      });
+    }
+    if (!userProfile) {
+      console.error("[User Profile] Can not Search Profile");
+      Toast.show({
+        type: "error",
+        text1: "Search User",
+        text2: "Can't search",
+      });
+      return;
+    }
+    return userProfile;
+  };
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      const { data: userProfile, error: fetchProfileError } = await supabase
-        .from("users")
-        .select("email, name, avatar_uri, sex")
-        .eq("id", user.id)
-        .single();
-      if (fetchProfileError) {
-        console.error("[User Profile] ", fetchProfileError);
-      }
-      if (!userProfile) {
-        console.error("[User Profile] Can not Search Profile");
-        return;
-      }
+    const setDefaultData = async () => {
+      const currentUser = await fetchUserProfile();
       setUserProfile({
-        name: userProfile.name || "Anonymous",
-        email: userProfile.email || "",
-        avatarUri: userProfile.avatar_uri || "",
-        sex: userProfile.sex.toString() || "Not Answer",
+        name: currentUser?.name || "Anonymous",
+        email: currentUser?.email || "",
+        avatarUri: currentUser?.avatar_uri || "",
+        sex: currentUser?.sex.toString() || "Not Answer",
+      });
+      setUserProfilePrev({
+        name: currentUser?.name || "Anonymous",
+        email: currentUser?.email || "",
+        avatarUri: currentUser?.avatar_uri || "",
+        sex: currentUser?.sex.toString() || "Not Answer",
       });
     };
-    fetchUserProfile();
-    console.log(userProfile);
+    setDefaultData();
   }, []);
   useEffect(() => {
-    console.log(userProfile);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (JSON.stringify(userProfile) === JSON.stringify(userProfilePrev)) {
+      return;
+    }
+    Toast.show({
+      type: "success",
+      text1: "Update User",
+      visibilityTime: 10000,
+    });
+    timerRef.current = setTimeout(async () => {
+      handleSaveProfile();
+    }, 10000);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [userProfile]);
   return (
     <View style={style.card}>
@@ -164,7 +183,9 @@ const Profile = ({ user }: { user: any }) => {
       <View style={style.contactContainer}>
         <EditableText
           value={userProfile.name}
-          propStyles={{ text: { fontSize: 24,fontWeight:700,color:'#4a7aba' } }}
+          propStyles={{
+            text: { fontSize: 24, fontWeight: 700, color: "#4a7aba" },
+          }}
           onChange={(userName) =>
             setUserProfile((prev) => ({ ...prev, name: userName }))
           }
@@ -182,18 +203,21 @@ const Profile = ({ user }: { user: any }) => {
           onValueChange={(itemValue) =>
             setUserProfile((prev) => ({ ...prev, sex: itemValue }))
           }
-          style={[Common_styles.picker, {
-            width: "auto",
-            height: 20,
-            fontSize: 14,
-          }]}
+          style={[
+            Common_styles.picker,
+            {
+              width: "auto",
+              height: 20,
+              fontSize: 14,
+            },
+          ]}
         >
           <Picker.Item label="生理性別" value={0} />
           <Picker.Item label="男生" value={1} />
           <Picker.Item label="女生" value={2} />
         </Picker>
       </View>
-      {/* <View style={{flex: 1, 
+      {/* <View style={{flex: 1,
   justifyContent: 'flex-end'}}>
         <Pressable onPress={() => handleSaveProfile()} style={style.btnSubmit}>
           <FontAwesome name="floppy-o" size={24} color="#4a7aba" />
@@ -220,7 +244,6 @@ const style = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     position: "relative",
-
   },
   avatar: {
     borderRadius: 9999,
@@ -258,7 +281,6 @@ const style = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     width: "auto",
-
   },
   text: {
     fontSize: 14,
