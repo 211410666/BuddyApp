@@ -9,8 +9,7 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
-
+import { FontAwesome } from '@expo/vector-icons'
 type Props = {
   value: string;
   onChange: (newValue: string) => void;
@@ -50,7 +49,7 @@ export function EditableText({ value, onChange, propStyles }: Props) {
       )}
 
       <Pressable onPress={toggleEdit} style={[styles.icon, propStyles?.btn]}>
-        <Feather name={isEditing ? "check" : "edit"} size={18} color="#888" />
+        <FontAwesome name={isEditing ? "check" : "pencil"} size={14} color="#4670b9" />
       </Pressable>
     </View>
   );
@@ -63,21 +62,22 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
     alignItems: "center",
     gap: 8,
+    width: "auto",
+
   },
   text: {
-    fontSize: 16,
-    minWidth: 120,
+    fontSize: 14,
+    minWidth: 60,
     color: "#2c2c2c",
   },
   input: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#2c2c2c",
     borderBottomWidth: 1,
     borderBottomColor: "#666",
-    minWidth: 120,
-    padding: 2,
+    width: "auto",
   },
   icon: {
-    padding: 4,
+    // padding: 4,
   },
 });

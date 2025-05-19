@@ -39,19 +39,21 @@ export default function Settings({ user }: any) {
 }
 
 const pageStyles = StyleSheet.create({
+  //背景
   screen: {
     flex: 1,
     width: WINDOWS_WIDTH,
     height: WINDOWS_HEIGHT,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(208, 224, 253, 1)",
+    backgroundColor: "#e0f2ff",
   },
+  //白底
   dash: {
     width: WINDOWS_WIDTH * 0.88,
     height: WINDOWS_HEIGHT * 0.77,
-    padding: 4 * 12,
-    backgroundColor: "rgba(246, 249, 255, 1)",
+    padding: 10,
+    backgroundColor: "#819ac8",
     borderRadius: 12,
     flexDirection: "column",
     justifyContent: "space-evenly",
