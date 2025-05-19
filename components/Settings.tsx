@@ -23,18 +23,14 @@ export default function Settings({ user }: any) {
     validateUser();
   }, []);
   return (
-    <SafeAreaView style={pageStyles.screen}>
-      <View
-        style={[
-          pageStyles.dash,
-          isTablet && { width: WINDOWS_WIDTH * 0.8 },
-          isDesktop && { width: WINDOWS_WIDTH * 0.75 },
-        ]}
-      >
-        <Profile user={user}></Profile>
-        <Health user={user}></Health>
+    <View style={pageStyles.screen}>
+      <View style={pageStyles.dashWrapper}>
+        <View style={pageStyles.dash}>
+          <Profile user={user} />
+          <Health user={user} />
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -42,16 +38,16 @@ const pageStyles = StyleSheet.create({
   //背景
   screen: {
     flex: 1,
-    width: WINDOWS_WIDTH,
-    height: WINDOWS_HEIGHT,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#e0f2ff",
   },
   //白底
   dash: {
-    width: WINDOWS_WIDTH * 0.88,
-    height: WINDOWS_HEIGHT * 0.77,
+    flex: 1,
+    width: "88%",
+    maxWidth: 768, // 或你想要的最大寬度
+    height: "77%", // 用百分比即可
     padding: 10,
     backgroundColor: "#819ac8",
     borderRadius: 12,
@@ -59,5 +55,9 @@ const pageStyles = StyleSheet.create({
     justifyContent: "space-evenly",
     alignItems: "center",
     gap: 16,
+  },
+  dashWrapper: {
+    width: "100%",
+    alignItems: "center", // 讓 dash 在寬螢幕置中
   },
 });

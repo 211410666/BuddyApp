@@ -53,6 +53,7 @@ const Health = ({ user }: { user: any }) => {
   return (
     <View style={style.card}>
       <View style={style.items}>
+        {/* Height */}
         <View style={style.item}>
           <View style={{ flexDirection: "row", flex: 1 }}>
             <View style={style.iconFormat}>
@@ -69,8 +70,10 @@ const Health = ({ user }: { user: any }) => {
                 height: parseInt(newHeight.replace(/[^\d]/g, "")),
               }))
             }
-          ></TextInput>
+          />
         </View>
+
+        {/* Weight */}
         <View style={style.item}>
           <View style={{ flexDirection: "row", flex: 1 }}>
             <View style={style.iconFormat}>
@@ -87,8 +90,10 @@ const Health = ({ user }: { user: any }) => {
                 weight: parseInt(newWeight.replace(/[^\d]/g, "")),
               }))
             }
-          ></TextInput>
+          />
         </View>
+
+        {/* Body Fat Percentage */}
         <View style={style.item}>
           <View style={{ flexDirection: "row", flex: 1 }}>
             <View style={style.iconFormat}>
@@ -105,39 +110,38 @@ const Health = ({ user }: { user: any }) => {
                 bodyFatPercentage: parseFloat(newUri.replace(/[^\d]/g, "")),
               }))
             }
-          ></TextInput>
+          />
         </View>
       </View>
-      <Pressable
-        style={style.btnSubmit}
-        onPress={async () => {
-          const { error: updateHeightError } = await supabase
-            .from("users")
-            .update({ height: userHealth.height })
-            .eq("id", user.id);
-          const { error: updateWeightError } = await supabase
-            .from("users")
-            .update({ weight: userHealth.weight })
-            .eq("id", user.id);
-          const { error: updateBFPError } = await supabase
-            .from("users")
-            .update({ bfp: userHealth.bodyFatPercentage })
-            .eq("id", user.id);
-          if (updateHeightError) {
-            console.error("[Height Update] ", updateHeightError);
-          }
-          if (updateWeightError) {
-            console.error("[Weight Update] ", updateWeightError);
-          }
-          if (updateBFPError) {
-            console.error("[BFP Update] ", updateBFPError);
-          }
-        }}
-      >
-        <Text style={style.textSummit}>Submit</Text>
-      </Pressable>
+
+      {/* ✅ Submit Button - centered */}
+      <View style={{ marginTop: 30, flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <Pressable
+          style={style.btnSubmit}
+          onPress={async () => {
+            const { error: updateHeightError } = await supabase
+              .from("users")
+              .update({ height: userHealth.height })
+              .eq("id", user.id);
+            const { error: updateWeightError } = await supabase
+              .from("users")
+              .update({ weight: userHealth.weight })
+              .eq("id", user.id);
+            const { error: updateBFPError } = await supabase
+              .from("users")
+              .update({ bfp: userHealth.bodyFatPercentage })
+              .eq("id", user.id);
+            if (updateHeightError) console.error("[Height Update] ", updateHeightError);
+            if (updateWeightError) console.error("[Weight Update] ", updateWeightError);
+            if (updateBFPError) console.error("[BFP Update] ", updateBFPError);
+          }}
+        >
+          <Text style={style.textSummit}>Submit</Text>
+        </Pressable>
+      </View>
     </View>
   );
+
 };
 
 const style = StyleSheet.create({
@@ -159,6 +163,8 @@ const style = StyleSheet.create({
   items: {
     flexDirection: "column",
     width: "100%",
+    marginTop:20,
+    padding:20,
   },
   //參數項目
   item: {

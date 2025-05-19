@@ -8,14 +8,15 @@ import {
   Keyboard,
   ViewStyle,
   TextStyle,
-  Dimensions,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import EditableAvatar from "./EditableAvatar";
 import { supabase } from "../../lib/supabase";
 import { Picker } from "@react-native-picker/picker";
-import { FontAwesome } from '@expo/vector-icons'
+import { FontAwesome } from "@expo/vector-icons";
 import Common_styles from "../../lib/common_styles";
-//
+
 type Props = {
   value: string;
   onChange: (newValue: string) => void;
@@ -27,16 +28,76 @@ type Props = {
   };
 };
 
-
-//
-const { height: WINDOWS_HEIGHT, width: WINDOWS_WIDTH } =
-  Dimensions.get("screen");
-
 type ProfileData = {
   avatarUri: string;
   name: string;
   email: string;
   sex: number;
+};
+
+const EditableText = ({
+  value,
+  onChange,
+  propStyles,
+}: Props) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  const saveAndExitEdit = async () => {
+    if (draft.trim() === "") {
+      Alert.alert("錯誤", "姓名不可為空");
+      return;
+    }
+    if (draft.trim() === value) {
+      // 沒改變直接關閉編輯
+      setIsEditing(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      await onChange(draft.trim());
+      setIsEditing(false);
+    } catch (error) {
+      Alert.alert("更新失敗", "請稍後再試");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <View style={[style.container, propStyles?.container]}>
+      {isEditing ? (
+        <>
+          <TextInput
+            value={draft}
+            onChangeText={setDraft}
+            style={[style.input, propStyles?.input]}
+            autoFocus
+            onSubmitEditing={saveAndExitEdit}
+            returnKeyType="done"
+            editable={!loading}
+          />
+          {loading ? (
+            <ActivityIndicator size="small" color="#4670b9" />
+          ) : (
+            <Pressable onPress={saveAndExitEdit} style={[style.icon, propStyles?.btn]}>
+              <FontAwesome name="check" size={16} color="#4670b9" />
+            </Pressable>
+          )}
+        </>
+      ) : (
+        <Pressable onPress={() => setIsEditing(true)} style={{ flexDirection: "row", alignItems: "center" }}>
+          <Text style={[style.text, propStyles?.text]}>{value || "未填寫"}</Text>
+          <FontAwesome name="pencil" size={14} color="#4670b9" style={{ marginLeft: 6 }} />
+        </Pressable>
+      )}
+    </View>
+  );
 };
 
 const Profile = ({ user }: { user: any }) => {
@@ -47,158 +108,89 @@ const Profile = ({ user }: { user: any }) => {
     sex: 0,
   });
 
-  function EditableText({ value, onChange, propStyles }: Props) {
-    const [isEditing, setIsEditing] = useState(false);
-    const [draft, setDraft] = useState(value);
-
-    const toggleEdit = () => {
-      if (isEditing) {
-        onChange(draft); // 儲存變更
-        Keyboard.dismiss();
-      }
-      handleSaveProfile()
-      setIsEditing((prev) => !prev);
-    };
-
-    return (
-      <View style={style.container}>
-        {isEditing ? (
-          <TextInput
-            value={draft}
-            onChangeText={setDraft}
-            style={[style.input, propStyles?.input]}
-            autoFocus
-            onSubmitEditing={toggleEdit}
-            returnKeyType="done"
-          />
-        ) : (
-          <Text style={[style.text, propStyles?.text]}>{value}</Text>
-        )}
-        <Pressable onPress={toggleEdit} style={[style.icon, propStyles?.btn]}>
-          <FontAwesome name={isEditing ? "check" : "pencil"} size={14} color="#4670b9" />
-        </Pressable>
-      </View>
-    );
-  }
-
-  const handleSaveProfile = async () => {
-    const { error: updateNameError } = await supabase
-      .from("users")
-      .update({
-        name: userProfile.name,
-      })
-      .eq("id", user.id);
-    const { error: updateEmailError } = await supabase
-      .from("users")
-      .update({
-        email: userProfile.email,
-      })
-      .eq("id", user.id);
-    const { error: updateAvatarError } = await supabase
-      .from("users")
-      .update({
-        avatar_uri: userProfile.avatarUri,
-      })
-      .eq("id", user.id);
-    const { error: updateGenderError } = await supabase
-      .from("users")
-      .update({
-        sex: userProfile.sex,
-      })
-      .eq("id", user.id);
-    if (updateNameError) {
-      console.error("[Update Profile] Failed:", updateNameError);
-    }
-    if (updateEmailError) {
-      console.error("[Update Profile] Failed:", updateEmailError);
-    }
-    if (updateAvatarError) {
-      console.error("[Update Profile] Failed:", updateAvatarError);
-    }
-    if (updateGenderError) {
-      console.error("[Update Profile] Failed:", updateAvatarError);
-    }
-    console.log("[Profile Update] Success");
-  };
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const { data: userProfile, error: fetchProfileError } = await supabase
+      const { data, error } = await supabase
         .from("users")
         .select("email, name, avatar_uri, sex")
         .eq("id", user.id)
         .single();
-      if (fetchProfileError) {
-        console.error("[User Profile] ", fetchProfileError);
-      }
-      if (!userProfile) {
-        console.error("[User Profile] Can not Search Profile");
+
+      if (error) {
+        console.error("[User Profile] Fetch error:", error);
         return;
       }
+      if (!data) {
+        console.error("[User Profile] No profile found");
+        return;
+      }
+
       setUserProfile({
-        name: userProfile.name || "Anonymous",
-        email: userProfile.email || "",
-        avatarUri: userProfile.avatar_uri || "",
-        sex: userProfile.sex.toString() || "Not Answer",
+        name: data.name || "Anonymous",
+        email: data.email || "",
+        avatarUri: data.avatar_uri || "",
+        sex: data.sex ?? 0,
       });
     };
     fetchUserProfile();
-    console.log(userProfile);
-  }, []);
-  useEffect(() => {
-    console.log(userProfile);
-  }, [userProfile]);
+  }, [user.id]);
+
+  // 單欄位更新，返回 Promise 方便 EditableText await
+  const updateField = async (field: keyof ProfileData, value: any) => {
+    const updateObj = { [field]: value };
+    const { error } = await supabase.from("users").update(updateObj).eq("id", user.id);
+    if (error) {
+      console.error(`[Update Profile] ${field} failed:`, error);
+      throw error;
+    }
+    // 更新本地 state
+    setUserProfile((prev) => ({ ...prev, [field]: value }));
+  };
+
   return (
     <View style={style.card}>
       <View style={style.avatarContainer}>
         <EditableAvatar
           uri={
             userProfile.avatarUri === ""
-              ? `https://api.dicebear.com/7.x/initials/svg?seed=${userProfile.name}`
+              ? `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                  userProfile.name
+                )}`
               : userProfile.avatarUri
           }
-          onChange={(newUri) =>
-            setUserProfile((prev) => ({ ...prev, avatarUri: newUri }))
-          }
+          onChange={(newUri) => updateField("avatarUri", newUri)}
         />
       </View>
+
       <View style={style.contactContainer}>
         <EditableText
           value={userProfile.name}
-          propStyles={{ text: { fontSize: 24,fontWeight:700,color:'#4a7aba' } }}
-          onChange={(userName) =>
-            setUserProfile((prev) => ({ ...prev, name: userName }))
-          }
+          propStyles={{ text: { fontSize: 24, fontWeight: "700", color: "#4a7aba" } }}
+          onChange={(newName) => updateField("name", newName)}
         />
-        <Text>ID:{userProfile.email.replace("@gmail.com", "")}</Text>
-        {/* <EditableText
-          value={userProfile.email.replace("@gmail.com", "")}
-          propStyles={{ text: { fontSize: 18 } }}
-          onChange={(userEmail) =>
-            setUserProfile((prev) => ({ ...prev, email: userEmail }))
-          }
-        /> */}
+        <Text style={{ fontSize: 16, marginVertical: 4 }}>
+          ID: {userProfile.email.replace("@gmail.com", "")}
+        </Text>
+
         <Picker
           selectedValue={userProfile.sex}
-          onValueChange={(itemValue) =>
-            setUserProfile((prev) => ({ ...prev, sex: itemValue }))
-          }
-          style={[Common_styles.picker, {
-            width: "auto",
-            height: 20,
-            fontSize: 14,
-          }]}
+          onValueChange={(itemValue) => updateField("sex", itemValue)}
+          style={[
+            Common_styles.picker,
+            {
+              width: "100%",
+              height: 36,
+              fontSize: 14,
+              marginTop: 5,
+            },
+          ]}
+          itemStyle={{ fontSize: 14 }}
         >
           <Picker.Item label="生理性別" value={0} />
           <Picker.Item label="男生" value={1} />
           <Picker.Item label="女生" value={2} />
         </Picker>
       </View>
-      {/* <View style={{flex: 1, 
-  justifyContent: 'flex-end'}}>
-        <Pressable onPress={() => handleSaveProfile()} style={style.btnSubmit}>
-          <FontAwesome name="floppy-o" size={24} color="#4a7aba" />
-      </Pressable>
-      </View> */}
     </View>
   );
 };
@@ -209,10 +201,10 @@ const style = StyleSheet.create({
     alignSelf: "stretch",
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    backgroundColor: "rgba(255, 255, 255, 1)",
+    padding: 20,
+    backgroundColor: "#fff",
     borderRadius: 8,
-    gap: 10,
+    gap: 12,
     width: "100%",
     height: 130,
     shadowColor: "#000",
@@ -220,16 +212,14 @@ const style = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     position: "relative",
-
-  },
-  avatar: {
-    borderRadius: 9999,
   },
   avatarContainer: {
     backgroundColor: "blue",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: "50%",
+    borderRadius: 65,
+    width: 130,
+    height: 130,
     borderWidth: 5,
     borderColor: "#fff",
     shadowColor: "#000",
@@ -239,26 +229,15 @@ const style = StyleSheet.create({
     position: "relative",
   },
   contactContainer: {
+    flex: 1,
     flexDirection: "column",
     justifyContent: "flex-start",
-    gap: 2,
-    height: 80,
-    width: 100,
+    gap: 6,
   },
-  picker: {},
-  btnSubmit: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  textSummit: {},
   container: {
-    flex: 1,
     flexDirection: "row",
-    alignSelf: "stretch",
     alignItems: "center",
     gap: 8,
-    width: "auto",
-
   },
   text: {
     fontSize: 14,
@@ -270,10 +249,10 @@ const style = StyleSheet.create({
     color: "#2c2c2c",
     borderBottomWidth: 1,
     borderBottomColor: "#666",
-    width: "auto",
+    minWidth: 60,
   },
   icon: {
-    // padding: 4,
+    paddingHorizontal: 4,
   },
 });
 
