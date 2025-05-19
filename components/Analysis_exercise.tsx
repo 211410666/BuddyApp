@@ -96,7 +96,6 @@ const Analysis_exercise = ({ user }: Props) => {
 
     useEffect(() => {
         fetchExerciseData()
-        fetchFoodData(user.id)
     }, [])
 
     const getHoursFromDuration = (data: any[]) => {

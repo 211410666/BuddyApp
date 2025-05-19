@@ -97,10 +97,13 @@ const FriendMessage = ({ user }: Props) => {
             nameMap.set(user.id, user.name);
         });
 
-        const mergedWithNames = mergedWithGood.map(item => ({
-            ...item,
-            name: nameMap.get(item.owner) || '未知使用者',
-        }));
+        const mergedWithNames = mergedWithGood
+            .map(item => ({
+                ...item,
+                name: nameMap.get(item.owner) || '未知使用者',
+            }))
+            .sort((a, b) => new Date(b.create_time).getTime() - new Date(a.create_time).getTime());
+        console.log('mergedWithNames', mergedWithNames)
 
         setFriendDiaryData(mergedWithNames);
         setLoading(false);
