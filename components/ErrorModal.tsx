@@ -17,10 +17,16 @@ const ErrorModal = ({ visible, message, onClose }: Props) => {
       onRequestClose={onClose}
     >
       <View style={Common_styles.overlay}>
-        <View style={[Common_styles.modal,{ backgroundColor: '#fdecea' }]}>
-          <Text style={Common_styles.alertTitle}><FontAwesome name="times-circle" size={24} color="rgb(217,63,94)" /></Text>
-          <Text style={[Common_styles.alertMessage,{color:'#b71c1c'}]}>{message}</Text>
-          <TouchableOpacity style={[Common_styles.AlertButton,{backgroundColor: '#b71c1c'}]} onPress={onClose}>
+        <View style={[Common_styles.modal, { backgroundColor: '#fdecea' }]}>
+          <Text style={Common_styles.alertTitle}>
+            <View style={Common_styles.iconContainer}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="#b71c1c" d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM175 175c9.4-9.4 24.6-9.4 33.9 0l47 47 47-47c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-47 47 47 47c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-47-47-47 47c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l47-47-47-47c-9.4-9.4-9.4-24.6 0-33.9z" /></svg>
+            </View>
+          </Text>
+          <Text style={[Common_styles.alertMessage, { color: '#b71c1c' }]}>{message}
+
+          </Text>
+          <TouchableOpacity style={[Common_styles.AlertButton, { backgroundColor: '#b71c1c' }]} onPress={onClose}>
             <Text style={Common_styles.AlertButtonText}>關閉</Text>
           </TouchableOpacity>
         </View>
